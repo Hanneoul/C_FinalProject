@@ -12,6 +12,56 @@ static void draw_border() {
     printf("+\n");
 }
 
+// 맵을 특정 배경색(flash_bg_code)으로 빠르게 다시 그림
+// flash_bg_code가 0이면 일반 배경으로 그림.
+void render_game_with_bg(const GameState* state, int flash_bg_code) {
+    // 1. 커서 숨기기
+    hide_cursor();
+
+    // 2. 정보창 출력 (상단 정보는 깜빡이지 않으므로 한 번만 출력하거나 여기에 포함시킴)
+    render_info(state);
+
+    // 3. 맵 출력 시작
+    move_cursor(1, 10);
+    draw_border();
+
+    for (int y = 1; y <= MAP_HEIGHT; y++) {
+        move_cursor(1, 10 + y);
+        printf("|");
+        for (int x = 1; x <= MAP_WIDTH; x++) {
+            int is_player1 = (state->player1.x == x && state->player1.y == y);
+            int is_player2 = (state->player2.x == x && state->player2.y == y);
+
+            // 배경색 결정: 플래시 코드 > 0 일 경우 해당 색상 사용, 아니면 기본 검정색 사용
+            if (flash_bg_code != 0) {
+                set_background_color(flash_bg_code);
+            }
+            else {
+                set_background_color(ANSI_BG_BLACK);
+            }
+
+            if (is_player1) {
+                set_foreground_color(ANSI_RED);
+                printf(" %c", state->player1.symbol); // P1 출력 ('X')
+            }
+            else if (is_player2) {
+                set_foreground_color(ANSI_BLUE);
+                printf(" %c", state->player2.symbol); // P2 출력 ('O')
+            }
+            else {
+                set_foreground_color(ANSI_WHITE);
+                printf(" ."); // 빈 공간
+            }
+            
+            reset_color();
+        }
+        printf(" |\n");
+    }
+    draw_border();
+
+    move_cursor(1, 10 + MAP_HEIGHT + 2);
+}
+
 void render_game(const GameState* state) {
     // 1. 화면 지우기 및 커서 숨기기
     clear_screen();
@@ -102,3 +152,4 @@ void render_info(const GameState* state) {
     // 커맨드 입력을 위해 커서를 이동시킴
     move_cursor(1, 7);
 }
+

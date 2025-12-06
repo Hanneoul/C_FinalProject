@@ -91,7 +91,7 @@ int main() {
         render_game(&game_state);
         render_info(&game_state);
 
-        // 4. 이펙트 적용 (플래시)
+        // 4. 이펙트 적용 (재렌더링 플래시)
         if (turn_flash_code != FLASH_NONE && game_state.game_over == 0) {
             int bg_code = 0;
             if (turn_flash_code == FLASH_P1 || turn_flash_code == FLASH_BOTH) {
@@ -101,15 +101,19 @@ int main() {
                 bg_code = ANSI_BG_BLUE;
             }
 
-            // 깜빡임 실행
             if (bg_code != 0) {
-                flash_screen(bg_code, 100);
+                // 1단계: 깜빡이는 배경색으로 화면 다시 그림
+                render_game_with_bg(&game_state, bg_code);
+                Sleep(50);
+
+                // 2단계: 일반 배경색으로 화면 다시 그림 (원상 복구)
+                render_game_with_bg(&game_state, 0);
             }
         }
 
         // 5. 턴 지연
         if (game_state.game_over == 0) {
-            Sleep(500);
+            Sleep(300);
         }
     }
 

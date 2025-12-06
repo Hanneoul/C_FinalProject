@@ -95,12 +95,32 @@ static void calculate_1step_move(int* x, int* y, int command) {
 }
 
 
+
+
+// ** 내부 액션 상태 코드 정의 **
+#define ACTION_FAILED                   0
+#define ACTION_SUCCEEDED_NO_FLASH       1 // 회복, 휴식, 독 부여 등
+#define ACTION_SUCCEEDED_AND_ATTACKED   2 // 기본 공격, 강타, 자폭 등 (플래시 발생)
+
+// ===============================================
+// ** Static API: 커맨드별 처리 함수 선언 **
+// ===============================================
+
+// 자원/타격형 스킬 (MP 소모 및 공격/회복)
+static int handle_mp_skill(Player* self, Player* opponent, int command);
+// 점멸형 스킬 (좌표 변경)
+static int handle_blink(Player* self, int command, int* next_x, int* next_y);
+// 기본 행동 (MP 소모 없는 공격/이동)
+static int handle_basic_action(Player* self, Player* opponent, int command, int* next_x, int* next_y);
+
+// 모든 커맨드를 분배하는 중앙 디스패처 함수
+static int handle_command_dispatch(Player* self, Player* opponent, int command, int* next_x, int* next_y);
+
 int execute_turn(GameState* state, int p1_command, int p2_command) {
     Player* p1 = &state->player1;
     Player* p2 = &state->player2;
 
-    int p1_attacked = 0;
-    int p2_attacked = 0;
+    
     int p1_action_taken = 0;
     int p2_action_taken = 0;
 
@@ -119,206 +139,16 @@ int execute_turn(GameState* state, int p1_command, int p2_command) {
         p2->poison_duration--;
     }
 
-    // 2. P1 커맨드 처리
+    // 2. P1/P2 커맨드 처리
     // -----------------------------------------------------------
-    if (p1->hp > 0) { // HP 0 이하는 행동 불가
-        // 2a. 스킬 처리 (if/else if)
-        if (p1_command == CMD_POISON && p1->mp >= 4) {
-            p1->mp -= 4;
-            p2->poison_duration = 3;
-            p1_action_taken = 1;
-        }
-        else if (p1_command == CMD_STRIKE && p1->mp >= 2) {
-            if (get_distance(p1, p2) <= 1) {
-                p1->mp -= 2;
-                p2->hp -= 2;
-                p1_attacked = 1;
-            }
-            p1_action_taken = 1;
-        }
-        else if (p1_command == CMD_HEAL && p1->mp >= 1) {
-            p1->mp -= 1;
-            p1->hp += 1;
-            p1_action_taken = 1;
-        }
-        else if (p1_command == CMD_HEAL_ALL && p1->mp >= 2) {
-            int mp_recovered = p1->mp - 2;
-            p1->mp -= 2;
-            p1->hp += (mp_recovered > 0 ? mp_recovered : 0);
-            p1_action_taken = 1;
-        }
-        else if (p1_command == CMD_RANGE_ATTACK && p1->mp >= 1) {
-            if (get_distance(p1, p2) == 2) {
-                p1->mp -= 1;
-                p2->hp -= 1;
-                p1_attacked = 1;
-            }
-            p1_action_taken = 1;
-        }
-        else if (p1_command == CMD_REST) {
-            p1->mp += 1;
-            p1_action_taken = 1;
-        }
-        else if (p1_command == CMD_SELF_DESTRUCT && p1->mp >= 5 && p1->hp > 3) {
-            p1->mp -= 5;
-            p1->hp -= 3;
-            p2->hp -= 3;
-            p1_attacked = 1;
-            p1_action_taken = 1;
-        }
-        else if (p1_command == CMD_H_ATTACK && p1->mp >= 3) {
-            if (p1->y == p2->y) {
-                p1->mp -= 3;
-                p2->hp -= 1;
-                p1_attacked = 1;
-            }
-            p1_action_taken = 1;
-        }
-        else if (p1_command == CMD_V_ATTACK && p1->mp >= 3) {
-            if (p1->x == p2->x) {
-                p1->mp -= 3;
-                p2->hp -= 1;
-                p1_attacked = 1;
-            }
-            p1_action_taken = 1;
-        }
-        // 2b. 이동 및 기본 공격 (스킬 실패 시의 폴백)
-        else {
-            if (p1_command >= CMD_BLINK_UP && p1_command <= CMD_BLINK_RIGHT && p1->mp >= 1) {
-                // 점멸 (Blink) 처리
-                int dx = 0, dy = 0;
-                if (p1_command == CMD_BLINK_UP) dy = -2;
-                else if (p1_command == CMD_BLINK_DOWN) dy = 2;
-                else if (p1_command == CMD_BLINK_LEFT) dx = -2;
-                else if (p1_command == CMD_BLINK_RIGHT) dx = 2;
-
-                p1_next_x += dx; p1_next_y += dy;
-
-                if (p1_next_x >= 1 && p1_next_x <= MAP_WIDTH && p1_next_y >= 1 && p1_next_y <= MAP_HEIGHT) {
-                    p1->mp -= 1;
-                }
-                else {
-                    p1_next_x = p1->x; p1_next_y = p1->y;
-                }
-                p1_action_taken = 1;
-            }
-            else if (p1_command == CMD_ATTACK) {
-                // 기본 공격 처리
-                if (get_distance(p1, p2) <= 1) {
-                    p2->hp -= 1;
-                    p1_attacked = 1;
-                }
-                p1_action_taken = 1;
-            }
-            else if (p1_command >= CMD_UP && p1_command <= CMD_RIGHT) {
-                // 기본 이동
-                calculate_1step_move(&p1_next_x, &p1_next_y, p1_command);
-                p1_action_taken = 1;
-            }
-        }
-    }
+    int p1_result = handle_command_dispatch(p1, p2, p1_command, &p1_next_x, &p1_next_y);
+    int p2_result = handle_command_dispatch(p2, p1, p2_command, &p2_next_x, &p2_next_y);
     // -----------------------------------------------------------
 
 
-    // 3. P2 커맨드 처리 (P1과 완벽하게 대칭되도록 수정)
-    // -----------------------------------------------------------
-    if (p2->hp > 0) {
-        // 3a. 스킬 처리 (if/else if)
-        if (p2_command == CMD_POISON && p2->mp >= 4) {
-            p2->mp -= 4;
-            p1->poison_duration = 3;
-            p2_action_taken = 1;
-        }
-        else if (p2_command == CMD_STRIKE && p2->mp >= 2) {
-            if (get_distance(p2, p1) <= 1) {
-                p2->mp -= 2;
-                p1->hp -= 2;
-                p2_attacked = 1;
-            }
-            p2_action_taken = 1;
-        }
-        else if (p2_command == CMD_HEAL && p2->mp >= 1) {
-            p2->mp -= 1;
-            p2->hp += 1;
-            p2_action_taken = 1;
-        }
-        else if (p2_command == CMD_HEAL_ALL && p2->mp >= 2) {
-            int mp_recovered = p2->mp - 2;
-            p2->mp -= 2;
-            p2->hp += (mp_recovered > 0 ? mp_recovered : 0);
-            p2_action_taken = 1;
-        }
-        else if (p2_command == CMD_RANGE_ATTACK && p2->mp >= 1) {
-            if (get_distance(p2, p1) == 2) {
-                p2->mp -= 1;
-                p1->hp -= 1;
-                p2_attacked = 1;
-            }
-            p2_action_taken = 1;
-        }
-        else if (p2_command == CMD_REST) {
-            p2->mp += 1;
-            p2_action_taken = 1;
-        }
-        else if (p2_command == CMD_SELF_DESTRUCT && p2->mp >= 5 && p2->hp > 3) {
-            p2->mp -= 5;
-            p2->hp -= 3;
-            p1->hp -= 3;
-            p2_attacked = 1;
-            p2_action_taken = 1;
-        }
-        else if (p2_command == CMD_H_ATTACK && p2->mp >= 3) {
-            if (p2->y == p1->y) {
-                p2->mp -= 3;
-                p1->hp -= 1;
-                p2_attacked = 1;
-            }
-            p2_action_taken = 1;
-        }
-        else if (p2_command == CMD_V_ATTACK && p2->mp >= 3) {
-            if (p2->x == p1->x) {
-                p2->mp -= 3;
-                p1->hp -= 1;
-                p2_attacked = 1;
-            }
-            p2_action_taken = 1;
-        }
-        // 3b. 이동 및 기본 공격 (스킬 실패 시의 폴백)
-        else {
-            if (p2_command >= CMD_BLINK_UP && p2_command <= CMD_BLINK_RIGHT && p2->mp >= 1) {
-                // 점멸 (Blink) 처리
-                int dx = 0, dy = 0;
-                if (p2_command == CMD_BLINK_UP) dy = -2;
-                else if (p2_command == CMD_BLINK_DOWN) dy = 2;
-                else if (p2_command == CMD_BLINK_LEFT) dx = -2;
-                else if (p2_command == CMD_BLINK_RIGHT) dx = 2;
-
-                p2_next_x += dx; p2_next_y += dy;
-
-                if (p2_next_x >= 1 && p2_next_x <= MAP_WIDTH && p2_next_y >= 1 && p2_next_y <= MAP_HEIGHT) {
-                    p2->mp -= 1;
-                }
-                else {
-                    p2_next_x = p2->x; p2_next_y = p2->y;
-                }
-                p2_action_taken = 1;
-            }
-            else if (p2_command == CMD_ATTACK) {
-                // 기본 공격 처리
-                if (get_distance(p2, p1) <= 1) {
-                    p1->hp -= 1;
-                    p2_attacked = 1;
-                }
-                p2_action_taken = 1;
-            }
-            else if (p2_command >= CMD_UP && p2_command <= CMD_RIGHT) {
-                // 기본 이동
-                calculate_1step_move(&p2_next_x, &p2_next_y, p2_command);
-                p2_action_taken = 1;
-            }
-        }
-    }
-    // -----------------------------------------------------------
+    // 3. 플래그 설정
+    int p1_attacked = (p1_result == ACTION_SUCCEEDED_AND_ATTACKED);
+    int p2_attacked = (p2_result == ACTION_SUCCEEDED_AND_ATTACKED);
 
 
     // 4. 이동 처리 (충돌 검사 및 최종 위치 반영)
@@ -375,4 +205,117 @@ int check_game_over(const GameState* state) {
     return 0; // 게임 진행 중
 }
 
-// ... (get_distance 함수는 생략됨)
+// ===============================================
+// ** 중앙 디스패처 구현 **
+// ===============================================
+
+static int handle_command_dispatch(Player* self, Player* opponent, int command, int* next_x, int* next_y) {
+    if (self->hp <= 0) return ACTION_FAILED;
+
+    // 1. 점멸 커맨드 분배 (CMD_BLINK_X: 8 ~ 11)
+    if (command >= CMD_BLINK_UP && command <= CMD_BLINK_RIGHT) {
+        return handle_blink(self, command, next_x, next_y);
+    }
+
+    // 2. MP 소모 스킬 분배 (CMD_POISON ~ CMD_V_ATTACK: 6, 7, 12 ~ 18)
+    if (command >= CMD_POISON && command <= CMD_V_ATTACK) {
+        return handle_mp_skill(self, opponent, command);
+    }
+
+    // 3. 기본 행동 분배 (CMD_UP ~ CMD_ATTACK: 1 ~ 5)
+    if (command >= CMD_UP && command <= CMD_ATTACK) {
+        return handle_basic_action(self, opponent, command, next_x, next_y);
+    }
+
+    return ACTION_FAILED; // 정의되지 않은 커맨드
+}
+
+// --- Static API: 점멸 처리 ---
+static int handle_blink(Player* self, int command, int* next_x, int* next_y) {
+    // 1. MP 소모 조건 확인
+    if (self->mp < 1) {
+        return ACTION_FAILED;
+    }
+
+    int dx = 0;
+    int dy = 0;
+
+    // 2. 커맨드에 따른 이동 거리 계산 (2칸 이동)
+    if (command == CMD_BLINK_UP) {
+        dy = -2;
+    }
+    else if (command == CMD_BLINK_DOWN) {
+        dy = 2;
+    }
+    else if (command == CMD_BLINK_LEFT) {
+        dx = -2;
+    }
+    else if (command == CMD_BLINK_RIGHT) {
+        dx = 2;
+    }
+    else {
+        return ACTION_FAILED; // 잘못된 점멸 커맨드
+    }
+
+    int new_x = self->x + dx;
+    int new_y = self->y + dy;
+
+    // 3. 경계 검사 및 이동 처리
+    if (new_x >= 1 && new_x <= MAP_WIDTH && new_y >= 1 && new_y <= MAP_HEIGHT) {
+        // 성공: MP 소모 및 임시 좌표 업데이트
+        self->mp -= 1;
+        *next_x = new_x;
+        *next_y = new_y;
+        return ACTION_SUCCEEDED_NO_FLASH;
+    }
+
+    // 실패: 경계 초과
+    return ACTION_FAILED;
+}
+
+// --- Static API: MP 소모 스킬 처리 (독, 강타, 자폭 등) ---
+static int handle_mp_skill(Player* self, Player* opponent, int command) {
+    // 1. 자폭 (가장 엄격한 조건 체크)
+    if (command == CMD_SELF_DESTRUCT) {
+        if (self->mp >= 5 && self->hp > 3) {
+            self->mp -= 5;
+            self->hp -= 3;
+            opponent->hp -= 3;
+            return ACTION_SUCCEEDED_AND_ATTACKED;
+        }
+        return ACTION_FAILED;
+    }
+
+    // 2. 독 (Poison)
+    else if (command == CMD_POISON) {
+        if (self->mp >= 4) {
+            self->mp -= 4;
+            opponent->poison_duration = 3;
+            return ACTION_SUCCEEDED_NO_FLASH;
+        }
+        return ACTION_FAILED;
+    }
+
+    // ... (나머지 강타, 회복, 원거리, 가로/세로 공격 로직도 이 함수 내에서 if/else if로 처리되어야 함)
+
+    return ACTION_FAILED;
+}
+
+// --- Static API: 기본 행동 처리 (기본 이동 및 기본 공격) ---
+static int handle_basic_action(Player* self, Player* opponent, int command, int* next_x, int* next_y) {
+    if (command == CMD_ATTACK) {
+        if (get_distance(self, opponent) <= 1) {
+            opponent->hp -= 1;
+            return ACTION_SUCCEEDED_AND_ATTACKED;
+        }
+        return ACTION_SUCCEEDED_NO_FLASH; // 공격 시도만으로 성공 처리 (플래시 없음)
+    }
+
+    // 기본 이동 (CMD_UP ~ CMD_RIGHT)
+    if (command >= CMD_UP && command <= CMD_RIGHT) {
+        calculate_1step_move(next_x, next_y, command);
+        return ACTION_SUCCEEDED_NO_FLASH;
+    }
+
+    return ACTION_FAILED;
+}
