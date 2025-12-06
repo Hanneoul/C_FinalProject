@@ -95,13 +95,14 @@ static void calculate_1step_move(int* x, int* y, int command) {
 }
 
 
-// 두 플레이어의 행동을 동시에 처리함
 int execute_turn(GameState* state, int p1_command, int p2_command) {
     Player* p1 = &state->player1;
     Player* p2 = &state->player2;
 
     int p1_attacked = 0;
     int p2_attacked = 0;
+    int p1_action_taken = 0;
+    int p2_action_taken = 0;
 
     int p1_next_x = p1->x;
     int p1_next_y = p1->y;
@@ -118,11 +119,10 @@ int execute_turn(GameState* state, int p1_command, int p2_command) {
         p2->poison_duration--;
     }
 
-    // 2. P1 커맨드 처리 (P1 행동이 성공적으로 처리되었는지 확인하는 플래그)
-    int p1_action_taken = 0;
+    // 2. P1 커맨드 처리
+    // -----------------------------------------------------------
     if (p1->hp > 0) { // HP 0 이하는 행동 불가
-
-        // 2a. 모든 스킬을 순차적으로 시도 (if/else if)
+        // 2a. 스킬 처리 (if/else if)
         if (p1_command == CMD_POISON && p1->mp >= 4) {
             p1->mp -= 4;
             p2->poison_duration = 3;
@@ -184,12 +184,16 @@ int execute_turn(GameState* state, int p1_command, int p2_command) {
         }
         // 2b. 이동 및 기본 공격 (스킬 실패 시의 폴백)
         else {
-            // 점멸 (Blink) 처리
             if (p1_command >= CMD_BLINK_UP && p1_command <= CMD_BLINK_RIGHT && p1->mp >= 1) {
+                // 점멸 (Blink) 처리
                 int dx = 0, dy = 0;
-                // ... dx/dy 계산 로직 (이전 코드에서 복사됨) ...
+                if (p1_command == CMD_BLINK_UP) dy = -2;
+                else if (p1_command == CMD_BLINK_DOWN) dy = 2;
+                else if (p1_command == CMD_BLINK_LEFT) dx = -2;
+                else if (p1_command == CMD_BLINK_RIGHT) dx = 2;
 
                 p1_next_x += dx; p1_next_y += dy;
+
                 if (p1_next_x >= 1 && p1_next_x <= MAP_WIDTH && p1_next_y >= 1 && p1_next_y <= MAP_HEIGHT) {
                     p1->mp -= 1;
                 }
@@ -211,27 +215,120 @@ int execute_turn(GameState* state, int p1_command, int p2_command) {
                 calculate_1step_move(&p1_next_x, &p1_next_y, p1_command);
                 p1_action_taken = 1;
             }
-            // else: 잘못된 커맨드 입력, 아무것도 하지 않음 (p1_action_taken=0 유지)
         }
     }
-
-
-    // 3. P2 커맨드 처리 (P1과 동일한 구조로 처리)
     // -----------------------------------------------------------
-    int p2_action_taken = 0;
+
+
+    // 3. P2 커맨드 처리 (P1과 완벽하게 대칭되도록 수정)
+    // -----------------------------------------------------------
     if (p2->hp > 0) {
-        // ... (P2의 모든 스킬 및 이동 로직은 P1과 대칭되도록 구성되어야 함) ...
+        // 3a. 스킬 처리 (if/else if)
+        if (p2_command == CMD_POISON && p2->mp >= 4) {
+            p2->mp -= 4;
+            p1->poison_duration = 3;
+            p2_action_taken = 1;
+        }
+        else if (p2_command == CMD_STRIKE && p2->mp >= 2) {
+            if (get_distance(p2, p1) <= 1) {
+                p2->mp -= 2;
+                p1->hp -= 2;
+                p2_attacked = 1;
+            }
+            p2_action_taken = 1;
+        }
+        else if (p2_command == CMD_HEAL && p2->mp >= 1) {
+            p2->mp -= 1;
+            p2->hp += 1;
+            p2_action_taken = 1;
+        }
+        else if (p2_command == CMD_HEAL_ALL && p2->mp >= 2) {
+            int mp_recovered = p2->mp - 2;
+            p2->mp -= 2;
+            p2->hp += (mp_recovered > 0 ? mp_recovered : 0);
+            p2_action_taken = 1;
+        }
+        else if (p2_command == CMD_RANGE_ATTACK && p2->mp >= 1) {
+            if (get_distance(p2, p1) == 2) {
+                p2->mp -= 1;
+                p1->hp -= 1;
+                p2_attacked = 1;
+            }
+            p2_action_taken = 1;
+        }
+        else if (p2_command == CMD_REST) {
+            p2->mp += 1;
+            p2_action_taken = 1;
+        }
+        else if (p2_command == CMD_SELF_DESTRUCT && p2->mp >= 5 && p2->hp > 3) {
+            p2->mp -= 5;
+            p2->hp -= 3;
+            p1->hp -= 3;
+            p2_attacked = 1;
+            p2_action_taken = 1;
+        }
+        else if (p2_command == CMD_H_ATTACK && p2->mp >= 3) {
+            if (p2->y == p1->y) {
+                p2->mp -= 3;
+                p1->hp -= 1;
+                p2_attacked = 1;
+            }
+            p2_action_taken = 1;
+        }
+        else if (p2_command == CMD_V_ATTACK && p2->mp >= 3) {
+            if (p2->x == p1->x) {
+                p2->mp -= 3;
+                p1->hp -= 1;
+                p2_attacked = 1;
+            }
+            p2_action_taken = 1;
+        }
+        // 3b. 이동 및 기본 공격 (스킬 실패 시의 폴백)
+        else {
+            if (p2_command >= CMD_BLINK_UP && p2_command <= CMD_BLINK_RIGHT && p2->mp >= 1) {
+                // 점멸 (Blink) 처리
+                int dx = 0, dy = 0;
+                if (p2_command == CMD_BLINK_UP) dy = -2;
+                else if (p2_command == CMD_BLINK_DOWN) dy = 2;
+                else if (p2_command == CMD_BLINK_LEFT) dx = -2;
+                else if (p2_command == CMD_BLINK_RIGHT) dx = 2;
+
+                p2_next_x += dx; p2_next_y += dy;
+
+                if (p2_next_x >= 1 && p2_next_x <= MAP_WIDTH && p2_next_y >= 1 && p2_next_y <= MAP_HEIGHT) {
+                    p2->mp -= 1;
+                }
+                else {
+                    p2_next_x = p2->x; p2_next_y = p2->y;
+                }
+                p2_action_taken = 1;
+            }
+            else if (p2_command == CMD_ATTACK) {
+                // 기본 공격 처리
+                if (get_distance(p2, p1) <= 1) {
+                    p1->hp -= 1;
+                    p2_attacked = 1;
+                }
+                p2_action_taken = 1;
+            }
+            else if (p2_command >= CMD_UP && p2_command <= CMD_RIGHT) {
+                // 기본 이동
+                calculate_1step_move(&p2_next_x, &p2_next_y, p2_command);
+                p2_action_taken = 1;
+            }
+        }
     }
+    // -----------------------------------------------------------
 
 
     // 4. 이동 처리 (충돌 검사 및 최종 위치 반영)
 
-    // P1의 최종 위치 반영 (P2와 겹치지 않으면 반영)
+    // P1의 최종 위치 반영
     if (p1_next_x != p2_next_x || p1_next_y != p2_next_y) {
         p1->x = p1_next_x;
         p1->y = p1_next_y;
     }
-    // P2의 최종 위치 반영 (P1의 최종 위치와 겹치지 않으면 반영)
+    // P2의 최종 위치 반영 (P1의 새로운 위치와 충돌하지 않는 경우)
     if (p2_next_x != p1->x || p2_next_y != p1->y) {
         p2->x = p2_next_x;
         p2->y = p2_next_y;
@@ -249,17 +346,18 @@ int execute_turn(GameState* state, int p1_command, int p2_command) {
         flash_code = FLASH_P2;
     }
 
-    // 6. 게임 상태 업데이트
+    // 6. 게임 상태 업데이트 및 안전성 확보
     p1->last_command = p1_command;
     p2->last_command = p2_command;
     state->turn++;
-    state->game_over = check_game_over(state);
 
-    // HP와 MP는 0 이하로 내려가지 않도록 강제 (게임 안정성 확보)
+    // HP와 MP는 0 이하로 내려가지 않도록 강제
     if (p1->hp < 0) p1->hp = 0;
     if (p2->hp < 0) p2->hp = 0;
     if (p1->mp < 0) p1->mp = 0;
     if (p2->mp < 0) p2->mp = 0;
+
+    state->game_over = check_game_over(state);
 
     return flash_code;
 }
