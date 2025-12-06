@@ -100,13 +100,13 @@ void attempt_skill_unlock(int registration_key, int skill_command, const char* q
 
     // 1. 보안 검사: Key가 유효한지 확인
     if (self == NULL) {
-        printf("%d 플레이어 %d 스킬 : 해금 실패\n", registration_key, skill_command);
+        //printf("%d 플레이어 %d 스킬 : 해금 실패\n", registration_key, skill_command);
         return; // 유효하지 않은 Key, 해금 시도 실패
     }
 
     // 2. 커맨드 유효성 및 배열 경계 검사
     if (skill_command >= MAX_COMMAND_ID || skill_command < 1) {
-        printf("%d 플레이어 %d 스킬 : 해금 실패\n", registration_key, skill_command);
+        //printf("%d 플레이어 %d 스킬 : 해금 실패\n", registration_key, skill_command);
         return;
     }
 
