@@ -53,4 +53,6 @@ int simple_killer_ai(const Player* my_info, const Player* opponent_info) {
 void student1_ai_entry() {
     
     int my_secret_key = register_player_ai("TEAM-ALPHA", simple_killer_ai);
+
+    attempt_skill_unlock(my_secret_key, CMD_POISON, "mulmi roll");
 }

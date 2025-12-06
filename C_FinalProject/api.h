@@ -14,8 +14,11 @@ typedef int (*CommandFn)(const Player* my_info, const Player* opponent_info);
 // 3. AI 등록 API (학생이 자신의 함수를 시스템에 등록하기 위해 호출함)
 int register_player_ai(const char* team_name, CommandFn ai_function);
 
-// 해금 시 ID 대신 Key를 받도록 변경.
-void attempt_skill_unlock(int registration_key, int skill_command, int quiz_answer);
+// 4. 스킬 해금 시도 (문자열 정답을 받음)
+void attempt_skill_unlock(int registration_key, int skill_command, const char* quiz_answer);
+
+// 5. 스킬 해금 여부 확인 (보안 유지를 위해 Key로 인증)
+int is_skill_unlocked(int registration_key, int skill_command);
 
 
 // 4. 정보 접근 Getter 함수 (학생이 자신의 정보 및 상대 정보를 얻기 위해 호출함)

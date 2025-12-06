@@ -8,6 +8,7 @@
 #include "api.h"
 #include "registration.h"
 
+
 // GameState를 static으로 선언하여 register_player_ai에서 접근 가능하도록 함.
 static GameState game_state;
 
@@ -71,18 +72,83 @@ static int manual_command(const Player* my_info, const Player* opponent_info) {
 }
 
 
-// 퀴즈 정답 데이터베이스 (예시)
-#define QUIZ_ANSWER_STRIKE 1337
-#define QUIZ_ANSWER_POISON 4040
-// ... 다른 스킬에 대한 정답 정의 ...
+
 
 // ----------------------------------------------------
 // ** 학생용 API 구현: 스킬 해금 시도 **
 // ----------------------------------------------------
 
-void attempt_skill_unlock(int player_id, int skill_command, int quiz_answer) {
-   
+// 모든 퀴즈의 정답
+#define QUIZ_CORRECT_ANSWER "mulmi roll" 
+// (strlen("mulmi roll") == 10)
+
+// Key를 사용하여 Player 포인터를 찾는 보조 함수
+static Player* find_player_by_key(int registration_key) {
+    if (registration_key == game_state.player1.reg_key) {
+        return &game_state.player1;
+    }
+    else if (registration_key == game_state.player2.reg_key) {
+        return &game_state.player2;
+    }
+    return NULL; // 인증 실패
 }
+
+
+// --- 1. 스킬 해금 시도 함수 구현 ---
+void attempt_skill_unlock(int registration_key, int skill_command, const char* quiz_answer) {
+    Player* self = find_player_by_key(registration_key);
+
+    // 1. 보안 검사: Key가 유효한지 확인
+    if (self == NULL) {
+        printf("%d 플레이어 %d 스킬 : 해금 실패\n", registration_key, skill_command);
+        return; // 유효하지 않은 Key, 해금 시도 실패
+    }
+
+    // 2. 커맨드 유효성 및 배열 경계 검사
+    if (skill_command >= MAX_COMMAND_ID || skill_command < 1) {
+        printf("%d 플레이어 %d 스킬 : 해금 실패\n", registration_key, skill_command);
+        return;
+    }
+
+    // 3. 정답 확인 (strcmp 사용)
+    if (strcmp(quiz_answer, QUIZ_CORRECT_ANSWER) == 0) {
+        // 정답일 경우 해당 스킬 해금
+        self->skill_status[skill_command] = 1;
+
+        // **참고: Blink 및 H/V Attack 계열의 동시 해금 처리**
+        // Blink의 경우 (CMD_BLINK_UP, 8)을 맞추면 8, 9, 10, 11 모두 해금
+        if (skill_command >= CMD_BLINK_UP && skill_command <= CMD_BLINK_RIGHT) {
+            for (int i = CMD_BLINK_UP; i <= CMD_BLINK_RIGHT; i++) {
+                if (i < MAX_COMMAND_ID) self->skill_status[i] = 1;
+            }
+        }
+        // H/V Attack의 경우 (CMD_H_ATTACK, 17)을 맞추면 17, 18 모두 해금
+        if (skill_command == CMD_H_ATTACK || skill_command == CMD_V_ATTACK) {
+            if (CMD_H_ATTACK < MAX_COMMAND_ID) self->skill_status[CMD_H_ATTACK] = 1;
+            if (CMD_V_ATTACK < MAX_COMMAND_ID) self->skill_status[CMD_V_ATTACK] = 1;
+        }
+    }
+    else
+        printf("%d 플레이어 %d 스킬 : 해금 실패\n", registration_key, skill_command);
+
+}
+
+
+// --- 2. 스킬 해금 여부 확인 함수 구현 ---
+int is_skill_unlocked(int registration_key, int skill_command) {
+    Player* self = find_player_by_key(registration_key);
+
+    // 1. 보안 검사 및 커맨드 유효성 검사
+    if (self == NULL || skill_command >= MAX_COMMAND_ID || skill_command < 1) {
+        return 0; // 인증 실패 또는 유효하지 않은 커맨드
+    }
+
+    // 2. 해금 상태 반환
+    return self->skill_status[skill_command]; // 0 (잠김) 또는 1 (해금) 반환
+}
+
+
+
 
 
 int main() {
