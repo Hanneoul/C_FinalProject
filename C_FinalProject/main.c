@@ -11,21 +11,39 @@
 // GameState를 static으로 선언하여 register_player_ai에서 접근 가능하도록 함.
 static GameState game_state;
 
+static int next_slot_id_to_register = 1;
+
 // API 함수 구현: extern으로 선언된 register_player_ai 함수의 실제 구현부임.
-void register_player_ai(int player_id, const char* team_name, CommandFn ai_function) {
-    if (player_id == 1 && game_state.player1.get_command == NULL) { // 한 번만 등록 허용
-        strncpy(game_state.player1.name, team_name, 9);
-        game_state.player1.name[9] = '\0';
-        game_state.player1.get_command = ai_function;
-    }
-    else if (player_id == 2 && game_state.player2.get_command == NULL) { // 한 번만 등록 허용
-        strncpy(game_state.player2.name, team_name, 9);
-        game_state.player2.name[9] = '\0';
-        game_state.player2.get_command = ai_function;
+int register_player_ai(const char* team_name, CommandFn ai_function) {
+    if (next_slot_id_to_register > 2) return 0; // 등록 슬롯 초과
+
+    Player* target = NULL;
+    if (next_slot_id_to_register == 1) {
+        target = &game_state.player1;
     }
     else {
-        printf("등록 실패: P%d는 이미 등록되었거나 잘못된 ID임.\n", player_id);
+        target = &game_state.player2;
     }
+
+    // AI 함수 등록 및 이름 설정
+    // [1] 배열의 전체 크기(10)를 복사 길이로 사용
+    size_t size = sizeof(target->name);
+
+
+    // [2] strncpy로 복사 (대상 배열 크기만큼 복사 시도)
+    // Note: 만약 team_name이 size보다 길면, 널 종단이 되지 않습니다!
+    strncpy(target->name, team_name, size);
+
+    // [3] 널 종단 보장: 배열의 마지막 바이트(size - 1)에 \0을 강제 삽입
+    target->name[size - 1] = '\0'; // name[9]에 \0이 강제됨.
+    target->get_command = ai_function;
+    
+
+    // 슬롯 카운터 증가
+    next_slot_id_to_register++;
+
+    // **가장 중요한 부분: 고유 Key를 반환**
+    return target->reg_key;
 }
 
 
@@ -63,27 +81,7 @@ static int manual_command(const Player* my_info, const Player* opponent_info) {
 // ----------------------------------------------------
 
 void attempt_skill_unlock(int player_id, int skill_command, int quiz_answer) {
-    // Player *self 포인터 설정
-    Player* self = (player_id == 1) ? &game_state.player1 : &game_state.player2;
-    unsigned int skill_flag = 0;
-    int correct_answer = 0;
-
-    // 1. 커맨드 ID를 비트 플래그로 변환 및 정답 매핑
-    if (skill_command == CMD_STRIKE) {
-        skill_flag = SKILL_STRIKE;
-        correct_answer = QUIZ_ANSWER_STRIKE;
-    }
-    else if (skill_command == CMD_POISON) {
-        skill_flag = SKILL_POISON;
-        correct_answer = QUIZ_ANSWER_POISON;
-    }
-    // ... 다른 스킬 (CMD_BLINK_UP 등)에 대한 매핑 로직 추가 ...
-
-    if (skill_flag != 0 && quiz_answer == correct_answer) {
-        // 정답 확인 및 해금
-        self->unlocked_skills |= skill_flag;
-        // printf("P%d: Skill %d unlocked!\n", player_id, skill_command); // (디버깅용)
-    }
+   
 }
 
 
@@ -95,8 +93,8 @@ int main() {
     // ********** 학생 AI 등록 (명시적 호출) **********
     // 학생들에게 미리 고지된 함수명을 사용하여 등록 함수를 호출함.
     // 이 호출을 통해 학생들의 AI 함수 포인터가 game_state에 등록됨.
-    register_player1_logic();
-    register_player2_logic();
+    student1_ai_entry();
+    student2_ai_entry();
 
     // ********** AI 함수 포인터 초기화 **********
     // AI가 등록되지 않았다면 수동 입력 함수를 기본값으로 설정함.

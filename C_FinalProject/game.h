@@ -20,7 +20,8 @@ typedef int (*CommandFn)(const Player* my_info, const Player* opponent_info);
 typedef struct Player Player;
 
 struct Player {
-    int id;
+    int id;     // 1 또는 2 (내부 슬롯 구분용)
+    int reg_key;     // NEW: 고유 등록 키 (랜덤 학번 역할)
     int x;
     int y;
     int hp;

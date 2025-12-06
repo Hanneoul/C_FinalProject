@@ -12,7 +12,11 @@ typedef struct Player Player;
 typedef int (*CommandFn)(const Player* my_info, const Player* opponent_info);
 
 // 3. AI 등록 API (학생이 자신의 함수를 시스템에 등록하기 위해 호출함)
-extern void register_player_ai(int player_id, const char* team_name, CommandFn ai_function);
+int register_player_ai(const char* team_name, CommandFn ai_function);
+
+// 해금 시 ID 대신 Key를 받도록 변경.
+void attempt_skill_unlock(int registration_key, int skill_command, int quiz_answer);
+
 
 // 4. 정보 접근 Getter 함수 (학생이 자신의 정보 및 상대 정보를 얻기 위해 호출함)
 //    - 모든 함수는 const Player*를 받아 게임 상태를 변경하는 것을 방지함.

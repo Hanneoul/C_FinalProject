@@ -48,6 +48,7 @@ int simple_killer_ai2(const Player* my_info, const Player* opponent_info) {
 }
 
 // --- P2 등록 함수 구현 (main.c에서 호출됨) ---
-void register_player2_logic() {
-    register_player_ai(2, "TEAM-KILLER", simple_killer_ai2);
+void student2_ai_entry() {
+    // 1. AI 등록을 시도하고, 성공하면 고유 Key를 반환받아 저장
+    int my_secret_key = register_player_ai("TEAM-ALPHA", simple_killer_ai2);
 }

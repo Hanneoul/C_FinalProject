@@ -41,6 +41,12 @@ int get_player_id(const Player* p) {
 void init_game(GameState* state) {
     srand((unsigned int)time(NULL));
 
+    // 고유 랜덤 ID 생성 및 할당 (5자리 숫자)
+    state->player1.reg_key = (rand() % 90000) + 10000;
+    do {
+        state->player2.reg_key = (rand() % 90000) + 10000;
+    } while (state->player2.reg_key == state->player1.reg_key);
+
     // 플레이어 1 초기화
     state->player1.id = 1;
     state->player1.x = 1;
