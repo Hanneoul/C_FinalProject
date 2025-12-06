@@ -36,6 +36,9 @@
     <ClCompile Include="PlayerB.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="sound.c">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ansi_util.h">
@@ -54,6 +57,9 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="registration.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="sound.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

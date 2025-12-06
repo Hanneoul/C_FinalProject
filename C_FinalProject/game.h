@@ -1,6 +1,8 @@
 #ifndef GAME_H
 #define GAME_H
 
+#define MAX_COMMAND_ID 20
+
 #define MAP_WIDTH 15
 #define MAP_HEIGHT 7
 
@@ -29,6 +31,9 @@ struct Player {
 
     // NEW: 독 지속 시간
     int poison_duration;
+    
+    // 비트마스크 대신 인덱스 배열 사용: [0]=잠김, [1]=해금
+    int skill_status[MAX_COMMAND_ID];
 
     CommandFn get_command;
 };

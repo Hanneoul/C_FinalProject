@@ -53,6 +53,40 @@ static int manual_command(const Player* my_info, const Player* opponent_info) {
 }
 
 
+// 퀴즈 정답 데이터베이스 (예시)
+#define QUIZ_ANSWER_STRIKE 1337
+#define QUIZ_ANSWER_POISON 4040
+// ... 다른 스킬에 대한 정답 정의 ...
+
+// ----------------------------------------------------
+// ** 학생용 API 구현: 스킬 해금 시도 **
+// ----------------------------------------------------
+
+void attempt_skill_unlock(int player_id, int skill_command, int quiz_answer) {
+    // Player *self 포인터 설정
+    Player* self = (player_id == 1) ? &game_state.player1 : &game_state.player2;
+    unsigned int skill_flag = 0;
+    int correct_answer = 0;
+
+    // 1. 커맨드 ID를 비트 플래그로 변환 및 정답 매핑
+    if (skill_command == CMD_STRIKE) {
+        skill_flag = SKILL_STRIKE;
+        correct_answer = QUIZ_ANSWER_STRIKE;
+    }
+    else if (skill_command == CMD_POISON) {
+        skill_flag = SKILL_POISON;
+        correct_answer = QUIZ_ANSWER_POISON;
+    }
+    // ... 다른 스킬 (CMD_BLINK_UP 등)에 대한 매핑 로직 추가 ...
+
+    if (skill_flag != 0 && quiz_answer == correct_answer) {
+        // 정답 확인 및 해금
+        self->unlocked_skills |= skill_flag;
+        // printf("P%d: Skill %d unlocked!\n", player_id, skill_command); // (디버깅용)
+    }
+}
+
+
 int main() {
 
     enable_ansi_escape_codes();
@@ -93,22 +127,15 @@ int main() {
 
         // 4. 이펙트 적용 (재렌더링 플래시)
         if (turn_flash_code != FLASH_NONE && game_state.game_over == 0) {
-            int bg_code = 0;
-            if (turn_flash_code == FLASH_P1 || turn_flash_code == FLASH_BOTH) {
-                bg_code = ANSI_BG_RED;
-            }
-            else if (turn_flash_code == FLASH_P2) {
-                bg_code = ANSI_BG_BLUE;
-            }
+            // 플래시는 RED로 고정
+            int bg_code = ANSI_BG_RED;
+            
+            // 1단계: 공격 영역을 RED 배경으로 그림 (Flash ON)
+            render_localized_flash(&game_state, bg_code);
+            Sleep(100);
 
-            if (bg_code != 0) {
-                // 1단계: 깜빡이는 배경색으로 화면 다시 그림
-                render_game_with_bg(&game_state, bg_code);
-                Sleep(50);
-
-                // 2단계: 일반 배경색으로 화면 다시 그림 (원상 복구)
-                render_game_with_bg(&game_state, 0);
-            }
+            // 2단계: 공격 영역을 다시 기본 BLACK 배경으로 그림 (Flash OFF)
+            render_localized_flash(&game_state, 0);
         }
 
         // 5. 턴 지연

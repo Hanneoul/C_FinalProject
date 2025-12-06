@@ -134,6 +134,7 @@
     <ClCompile Include="PlayerA.c" />
     <ClCompile Include="PlayerB.c" />
     <ClCompile Include="render.c" />
+    <ClCompile Include="sound.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ansi_util.h" />
@@ -142,6 +143,7 @@
     <ClInclude Include="input.h" />
     <ClInclude Include="registration.h" />
     <ClInclude Include="render.h" />
+    <ClInclude Include="sound.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
