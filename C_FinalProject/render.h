@@ -12,7 +12,7 @@ void render_info(const GameState* state);
 // render.c 파일 상단 (Static 정의 부분에 추가)
 
 // 총 커맨드 수 (0번 인덱스는 사용하지 않거나 Wait로 가정, 1~18 사용)
-#define CMD_COUNT 19 
+#define CMD_COUNT 20 
 
 static const char* command_names[CMD_COUNT] = {
     "N/A", // 0번 인덱스 (사용 안 함)
@@ -34,6 +34,7 @@ static const char* command_names[CMD_COUNT] = {
     "자폭", // 16: CMD_SELF_DESTRUCT
     "가로공격", // 17: CMD_H_ATTACK
     "세로공격"  // 18: CMD_V_ATTACK
+    "비밀"    // 19: CMD_SECRETE
 };
 
 #endif // RENDER_H

@@ -31,24 +31,25 @@ extern int get_player_last_command(const Player* p);
 extern int get_player_id(const Player* p);
 
 // 5. 학생 AI 함수가 사용할 수 있는 커맨드 정의 (매크로)
-#define CMD_UP				1
-#define CMD_DOWN			2
-#define CMD_LEFT			3
-#define CMD_RIGHT			4
-#define CMD_ATTACK			5
-#define CMD_POISON          6  // 독 (MP 4, DoT 1 for 3 turns)
-#define CMD_STRIKE          7  // 강타 (MP 2, Damage 2, 근접)
-#define CMD_BLINK_UP        8  // 점멸 (상) (MP 1, 2칸 이동)
-#define CMD_BLINK_DOWN      9  // 점멸 (하) (MP 1, 2칸 이동)
-#define CMD_BLINK_LEFT     10  // 점멸 (좌) (MP 1, 2칸 이동)
-#define CMD_BLINK_RIGHT    11  // 점멸 (우) (MP 1, 2칸 이동)
-#define CMD_HEAL           12  // 회복 (MP 1, HP 1 회복)
-#define CMD_HEAL_ALL       13  // 회복2 (MP 2, 남은 MP만큼 HP 회복)
-#define CMD_RANGE_ATTACK   14  // 원거리 공격 (MP 1, 거리 2 타격)
-#define CMD_REST           15  // 휴식 (MP 1 회복)
-#define CMD_SELF_DESTRUCT  16  // 자폭 (HP 3, MP 5 소모, Damage 3, HP 3 초과 시 사용 가능)
-#define CMD_H_ATTACK       17  // 가로 공격 (MP 3, 가로 전체 1 데미지)
-#define CMD_V_ATTACK       18  // 세로 공격 (MP 3, 세로 전체 1 데미지)
+#define CMD_UP				1	//기본 스킬 :	  위로 이동
+#define CMD_DOWN			2	//기본 스킬 :	  아래로 이동
+#define CMD_LEFT			3	//기본 스킬 :	  좌로 이동
+#define CMD_RIGHT			4	//기본 스킬 :	  우로 이동
+#define CMD_ATTACK			5	//기본 스킬 :	  기본 범위 1짜리 공격
+#define CMD_POISON          6 	//해금필요 스킬 : 독 (MP 4, DoT 1 for 3 turns)
+#define CMD_STRIKE          7   //해금필요 스킬 : 강타 (MP 2, Damage 2, 근접)
+#define CMD_BLINK_UP        8   //해금필요 스킬 : 점멸 (상) (MP 1, 2칸 이동)
+#define CMD_BLINK_DOWN      9   //해금필요 스킬 : 점멸 (하) (MP 1, 2칸 이동)
+#define CMD_BLINK_LEFT     10   //해금필요 스킬 : 점멸 (좌) (MP 1, 2칸 이동)
+#define CMD_BLINK_RIGHT    11   //해금필요 스킬 : 점멸 (우) (MP 1, 2칸 이동)
+#define CMD_HEAL           12   //기본 스킬 :	  회복 (MP 1, HP 1 회복)
+#define CMD_HEAL_ALL       13   //해금필요 스킬 : 회복2 (MP 2, 남은 MP만큼 HP 회복)
+#define CMD_RANGE_ATTACK   14   //해금필요 스킬 : 원거리 공격 (MP 1, 거리 2 타격)
+#define CMD_REST           15   //기본 스킬 :	  휴식 (MP 1 회복)
+#define CMD_SELF_DESTRUCT  16   //해금필요 스킬 : 자폭 (HP 3, MP 5 소모, Damage 3, HP 3 초과 시 사용 가능)
+#define CMD_H_ATTACK       17   //해금필요 스킬 : 가로 공격 (MP 3, 가로 전체 1 데미지)
+#define CMD_V_ATTACK       18   //해금필요 스킬 : 세로 공격 (MP 3, 세로 전체 1 데미지)
+#define CMD_SECRETE       19   //해금필요 스킬 : 세로 공격 (MP 3, 세로 전체 1 데미지)
 
 // (학생들은 ansi_util.h나 game.h의 다른 함수들에 접근할 수 없음.)
 
