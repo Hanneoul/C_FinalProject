@@ -205,24 +205,59 @@ int execute_turn(GameState* state, int p1_command, int p2_command) {
     // ====================================================================
     // 4. 순차적 공격 적용 (Magic -> Action)
     // ====================================================================
+    // ** 4.1. 공격 우선순위 결정 **
+    int p1_goes_first = flip_coin();
+    Player* first_attacker, * second_attacker;
+    int first_command, second_command;
+    int first_wants_attack, second_wants_attack;
 
-    // --- 4a. 마법 공격 (Magic Phase) ---
-    // P1 Magic -> P2 Magic 순서로 진행
-    if (p1_wants_attack && (p1_command == CMD_POISON || p1_command == CMD_H_ATTACK || p1_command == CMD_V_ATTACK) && p1->hp > 0) {
-        if (ApplyFinalDamage(p1, p2, p1_command)) p1_attacked = 1;
+    if (p1_goes_first) {
+        first_attacker = p1; second_attacker = p2;
+        first_command = p1_command; second_command = p2_command;
+        first_wants_attack = p1_wants_attack; second_wants_attack = p2_wants_attack;
     }
-    if (p2_wants_attack && (p2_command == CMD_POISON || p2_command == CMD_H_ATTACK || p2_command == CMD_V_ATTACK) && p2->hp > 0 && p1->hp > 0) {
-        if (ApplyFinalDamage(p2, p1, p2_command)) p2_attacked = 1;
+    else {
+        first_attacker = p2; second_attacker = p1;
+        first_command = p2_command; second_command = p1_command;
+        first_wants_attack = p2_wants_attack; second_wants_attack = p1_wants_attack;
+    }
+
+    // 공격자 플래그 업데이트를 위한 헬퍼 매크로
+#define SET_ATTACKED_FLAG(player_ptr) \
+        do { \
+            if ((player_ptr) == p1) p1_attacked = 1; \
+            else p2_attacked = 1; \
+        } while (0)
+
+    // --- 4.2. 마법 공격 (Magic Phase) ---
+    // 1순위 공격자 실행
+    if (first_wants_attack && (first_command == CMD_POISON || first_command == CMD_H_ATTACK || first_command == CMD_V_ATTACK) && first_attacker->hp > 0) {
+        if (ApplyFinalDamage(first_attacker, second_attacker, first_command)) {
+            SET_ATTACKED_FLAG(first_attacker);
+        }
+    }
+
+    // 2순위 공격자 실행 (1순위 공격에 죽지 않았을 경우)
+    if (second_wants_attack && (second_command == CMD_POISON || second_command == CMD_H_ATTACK || second_command == CMD_V_ATTACK) && second_attacker->hp > 0 && first_attacker->hp > 0) {
+        if (ApplyFinalDamage(second_attacker, first_attacker, second_command)) {
+            SET_ATTACKED_FLAG(second_attacker);
+        }
     }
 
 
-    // --- 4b. 물리 공격 (Action Phase) ---
-    // P1 Action -> P2 Action 순서로 진행
-    if (p1_wants_attack && (p1_command == CMD_ATTACK || p1_command == CMD_STRIKE || p1_command == CMD_RANGE_ATTACK || p1_command == CMD_SELF_DESTRUCT) && p1->hp > 0) {
-        if (ApplyFinalDamage(p1, p2, p1_command)) p1_attacked = 1;
+    // --- 4.3. 물리 공격 (Action Phase) ---
+    // 1순위 공격자 실행
+    if (first_wants_attack && (first_command == CMD_ATTACK || first_command == CMD_STRIKE || first_command == CMD_RANGE_ATTACK || first_command == CMD_SELF_DESTRUCT) && first_attacker->hp > 0) {
+        if (ApplyFinalDamage(first_attacker, second_attacker, first_command)) {
+            SET_ATTACKED_FLAG(first_attacker);
+        }
     }
-    if (p2_wants_attack && (p2_command == CMD_ATTACK || p2_command == CMD_STRIKE || p2_command == CMD_RANGE_ATTACK || p2_command == CMD_SELF_DESTRUCT) && p2->hp > 0 && p1->hp > 0) {
-        if (ApplyFinalDamage(p2, p1, p2_command)) p2_attacked = 1;
+
+    // 2순위 공격자 실행 (1순위 공격에 죽지 않았을 경우)
+    if (second_wants_attack && (second_command == CMD_ATTACK || second_command == CMD_STRIKE || second_command == CMD_RANGE_ATTACK || second_command == CMD_SELF_DESTRUCT) && second_attacker->hp > 0 && first_attacker->hp > 0) {
+        if (ApplyFinalDamage(second_attacker, first_attacker, second_command)) {
+            SET_ATTACKED_FLAG(second_attacker);
+        }
     }
 
 
@@ -286,8 +321,10 @@ static int handle_command_dispatch(Player* self, Player* opponent, int command, 
 
 
     if (command < MAX_COMMAND_ID && self->skill_status[command] == 0)
+    {
         self->hp -= 2; // 페널티 2 데미지!
-    return ACTION_FAILED;
+        return ACTION_FAILED;
+    }
 
 
     // --- 1. 회복 및 휴식 (Heal Logic) ---
@@ -406,34 +443,34 @@ static int HandleMagic(Player* self, Player* opponent, int command) {
 // --- Static API: 4. HandleAction (물리 공격) ---
 static int HandleAction(Player* self, Player* opponent, int command) {
     if (command == CMD_ATTACK) {
-        // 기본 공격: MP 0, 근접 1 데미지
+        // 기본 공격: MP 0, 근접 1 데미지 -> [MP 0, 근접] 조건만 체크
         if (get_distance(self, opponent) <= 1) {
-            opponent->hp -= 1;
+            // NOTE: opponent->hp -= 1; (삭제됨 - ApplyFinalDamage로 이동)
             return ACTION_SUCCEEDED_AND_ATTACKED;
         }
     }
     else if (command == CMD_STRIKE) {
-        // 강타: MP 2 소모, 근접 2 데미지
+        // 강타: MP 2 소모, 근접 2 데미지 -> [MP 2, 근접] 조건 및 MP 소모만 처리
         if (self->mp >= 2 && get_distance(self, opponent) <= 1) {
             self->mp -= 2;
-            opponent->hp -= 2;
+            // NOTE: opponent->hp -= 2; (삭제됨)
             return ACTION_SUCCEEDED_AND_ATTACKED;
         }
     }
     else if (command == CMD_RANGE_ATTACK) {
-        // 원거리 공격: MP 1 소모, 거리 2 타격
+        // 원거리 공격: MP 1 소모, 거리 2 타격 -> [MP 1, 거리 2] 조건 및 MP 소모만 처리
         if (self->mp >= 1 && get_distance(self, opponent) == 2) {
             self->mp -= 1;
-            opponent->hp -= 1;
+            // NOTE: opponent->hp -= 1; (삭제됨)
             return ACTION_SUCCEEDED_AND_ATTACKED;
         }
     }
     else if (command == CMD_SELF_DESTRUCT) {
-        // 자폭: MP 5, HP 3 소모, 상대 3 데미지 (자폭 조건 확인)
+        // 자폭: MP 5, HP 3 소모, 상대 3 데미지 -> [MP/HP 조건] 및 자원 소모만 처리
         if (self->mp >= 5 && self->hp > 3) {
             self->mp -= 5;
-            self->hp -= 3;
-            opponent->hp -= 3;
+            self->hp -= 3; // 자기 HP 소모는 Cost이므로 유지
+            // NOTE: opponent->hp -= 3; (삭제됨)
             return ACTION_SUCCEEDED_AND_ATTACKED;
         }
     }

@@ -51,6 +51,6 @@ int simple_killer_ai(const Player* my_info, const Player* opponent_info) {
 
 // P1 등록 함수 (registration.h에 extern 선언됨)
 void student1_ai_entry() {
-    attempt_skill_unlock(1, CMD_STRIKE, 1337);
+    
     int my_secret_key = register_player_ai("TEAM-ALPHA", simple_killer_ai);
 }
