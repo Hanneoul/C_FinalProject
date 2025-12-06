@@ -30,7 +30,7 @@ extern int get_player_y(const Player* p);
 extern int get_player_last_command(const Player* p);
 extern int get_player_id(const Player* p);
 
-// 5. 학생 AI 함수가 사용할 수 있는 커맨드 정의 (매크로)
+// 5. AI 함수가 사용할 수 있는 커맨드 정의 (매크로)
 #define CMD_UP				1	//기본 스킬 :	  위로 이동
 #define CMD_DOWN			2	//기본 스킬 :	  아래로 이동
 #define CMD_LEFT			3	//기본 스킬 :	  좌로 이동
@@ -49,7 +49,7 @@ extern int get_player_id(const Player* p);
 #define CMD_SELF_DESTRUCT  16   //해금필요 스킬 : 자폭 (HP 3, MP 5 소모, Damage 3, HP 3 초과 시 사용 가능)
 #define CMD_H_ATTACK       17   //해금필요 스킬 : 가로 공격 (MP 3, 가로 전체 1 데미지)
 #define CMD_V_ATTACK       18   //해금필요 스킬 : 세로 공격 (MP 3, 세로 전체 1 데미지)
-#define CMD_SECRETE       19   //해금필요 스킬 : 세로 공격 (MP 3, 세로 전체 1 데미지)
+#define CMD_SECRETE        19   //해금필요 스킬 : 세로 공격 (MP 3, 세로 전체 1 데미지)
 
 // (학생들은 ansi_util.h나 game.h의 다른 함수들에 접근할 수 없음.)
 

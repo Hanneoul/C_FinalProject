@@ -30,8 +30,9 @@ struct Player {
     char symbol;
     int last_command;
 
-    // NEW: 독 지속 시간
+    // 독 지속 시간
     int poison_duration;
+    char secrete_message[500]; // 도발 메시지를 저장할 공간
     
     // 비트마스크 대신 인덱스 배열 사용: [0]=잠김, [1]=해금
     int skill_status[MAX_COMMAND_ID];

@@ -22,11 +22,11 @@ void render_game_with_bg(const GameState* state, int flash_bg_code) {
     render_info(state);
 
     // 3. 맵 출력 시작
-    move_cursor(1, 10);
+    move_cursor(1, 14);
     draw_border();
 
     for (int y = 1; y <= MAP_HEIGHT; y++) {
-        move_cursor(1, 10 + y);
+        move_cursor(1, 14 + y);
         printf("|");
         for (int x = 1; x <= MAP_WIDTH; x++) {
             int is_player1 = (state->player1.x == x && state->player1.y == y);
@@ -59,7 +59,7 @@ void render_game_with_bg(const GameState* state, int flash_bg_code) {
     }
     draw_border();
 
-    move_cursor(1, 10 + MAP_HEIGHT + 2);
+    move_cursor(1, 14 + MAP_HEIGHT + 2);
 }
 
 void render_game(const GameState* state) {
@@ -68,11 +68,11 @@ void render_game(const GameState* state) {
     hide_cursor();
 
     // 2. 맵 출력 시작
-    move_cursor(1, 10);
+    move_cursor(1, 14);
     draw_border();
 
     for (int y = 1; y <= MAP_HEIGHT; y++) {
-        move_cursor(1, 10 + y);
+        move_cursor(1, 14 + y);
         printf("|");
         for (int x = 1; x <= MAP_WIDTH; x++) {
             int is_player1 = (state->player1.x == x && state->player1.y == y);
@@ -97,7 +97,21 @@ void render_game(const GameState* state) {
     draw_border();
 
     // 3. 맵 아래에 커서를 위치시켜 다음 정보를 출력할 준비
-    move_cursor(1, 10 + MAP_HEIGHT + 2);
+    move_cursor(1, 14 + MAP_HEIGHT + 2);
+
+    // P1의 도발 메시지 출력
+    if (state->player1.secrete_message[0] != '\0') {
+        set_foreground_color(ANSI_CYAN); // P1 메시지는 CYAN으로
+        printf(">> %s", state->player1.secrete_message);
+        reset_color();
+    }
+
+    // P2의 도발 메시지 출력
+    if (state->player2.secrete_message[0] != '\0') {
+        set_foreground_color(ANSI_MAGENTA); // P2 메시지는 MAGENTA로
+        printf(">> %s", state->player2.secrete_message);
+        reset_color();
+    }
 }
 
 void render_info(const GameState* state) {
@@ -151,7 +165,7 @@ void render_info(const GameState* state) {
         // CMD_UP (1) 부터 CMD_V_ATTACK (18)까지 순회
         for (int i = 1; i < MAX_COMMAND_ID; i++) {
             // 해당 CMD_ID가 해금되었을 경우 (skill_status[i] == 1)
-            if (state->player2.skill_st%%atus[i] == 1) {
+            if (state->player2.skill_status[i] == 1) {
                 // 커맨드 인덱스와 이름을 출력합니다.
                 printf("%d(%s) ", i, command_names[i]);
                 count++;
@@ -217,7 +231,7 @@ void render_localized_flash(const GameState* state, int flash_bg_code) {
     // 맵 영역만 반복하여 다시 그림
     for (int y = min_y; y <= max_y; y++) {
         for (int x = min_x; x <= max_x; x++) {
-            move_cursor(1 + (x * 2) - 1, 10 + y); // (x*2 - 1)은 맵 심볼의 위치 (1-based + 2칸 너비)
+            move_cursor(1 + (x * 2) - 1, 14 + y); // (x*2 - 1)은 맵 심볼의 위치 (1-based + 2칸 너비)
 
             int is_player1 = (state->player1.x == x && state->player1.y == y);
             int is_player2 = (state->player2.x == x && state->player2.y == y);

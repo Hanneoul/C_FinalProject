@@ -54,22 +54,60 @@ void student1_ai_entry() {
     
     int my_secret_key = register_player_ai("TEAM-ALPHA", simple_killer_ai);
 
-    attempt_skill_unlock(my_secret_key, CMD_POISON, "multimedia f");
+    attempt_skill_unlock(my_secret_key, CMD_POISON, "Ancient_Relic|Doom_Greatsword|Immortal_Sword");
     if (is_skill_unlocked(my_secret_key, CMD_POISON))
         printf("TEAM-ALPHA : CMD_POISON 해금 완료\n");
     else
         printf("TEAM-ALPHA : CMD_POISON 해금 실패 ㅜㅜ\n");
 
-
+    attempt_skill_unlock(my_secret_key, CMD_STRIKE, "2key");
+    if (is_skill_unlocked(my_secret_key, CMD_STRIKE))
+        printf("TEAM-ALPHA : CMD_STRIKE 해금 완료\n");
+    else
+        printf("TEAM-ALPHA : CMD_STRIKE 해금 실패 ㅜㅜ\n");
 
     
-    attempt_skill_unlock(my_secret_key, CMD_BLINK_DOWN, "multimedia");
+    attempt_skill_unlock(my_secret_key, CMD_BLINK_DOWN, "*A**C**F**T*");
     if (is_skill_unlocked(my_secret_key, CMD_BLINK_DOWN))
-        printf("TEAM-ALPHA : CMD_BLINK_DOWN 해금 완료\n");
+        printf("TEAM-ALPHA : CMD_BLINK 4종 해금 완료\n");
     else
-        printf("TEAM-ALPHA : CMD_BLINK_DOWN 해금 실패 ㅜㅜ\n");
+        printf("TEAM-ALPHA : CMD_BLINK 4종 해금 실패 ㅜㅜ\n");
 
-    printf("%d 플레이어 : 초기화 완료. 아무키나 누르시오.\n", my_secret_key);
+
+    attempt_skill_unlock(my_secret_key, CMD_HEAL_ALL, "*H*");
+    if (is_skill_unlocked(my_secret_key, CMD_HEAL_ALL))
+        printf("TEAM-ALPHA : CMD_HEAL_ALL 해금 완료\n");
+    else
+        printf("TEAM-ALPHA : CMD_HEAL_ALL 해금 실패 ㅜㅜ\n");
+
+    attempt_skill_unlock(my_secret_key, CMD_RANGE_ATTACK, "\"LOT,A\"");
+    if (is_skill_unlocked(my_secret_key, CMD_RANGE_ATTACK))
+        printf("TEAM-ALPHA : CMD_RANGE_ATTACK 해금 완료\n");
+    else
+        printf("TEAM-ALPHA : CMD_RANGE_ATTACK 해금 실패 ㅜㅜ\n");
+
+    attempt_skill_unlock(my_secret_key, CMD_SELF_DESTRUCT, "T");
+    if (is_skill_unlocked(my_secret_key, CMD_SELF_DESTRUCT))
+        printf("TEAM-ALPHA : CMD_SELF_DESTRUCT 해금 완료\n");
+    else
+        printf("TEAM-ALPHA : CMD_SELF_DESTRUCT 해금 실패 ㅜㅜ\n");
+
+    attempt_skill_unlock(my_secret_key, CMD_H_ATTACK, "Inf_03");
+    if (is_skill_unlocked(my_secret_key, CMD_H_ATTACK))
+        printf("TEAM-ALPHA : CMD_H_ATTACK,CMD_V_ATTACK  해금 완료\n");
+    else
+        printf("TEAM-ALPHA : CMD_H_ATTACK,CMD_V_ATTACK 해금 실패 ㅜㅜ\n");
+
+    attempt_skill_unlock(my_secret_key, CMD_BLINK_DOWN, "wn_St");
+    if (is_skill_unlocked(my_secret_key, CMD_BLINK_DOWN))
+    {
+        printf("TEAM-ALPHA : CMD_SECRETE 해금 완료\n");
+        set_custom_secrete_message(my_secret_key, "후후후 좁밥들...");
+    }
+    else
+        printf("TEAM-ALPHA : CMD_SECRETE 해금 실패 ㅜㅜ\n");
+
+    printf("TEAM-ALPHA : 플레이어 초기화 완료. 아무키나 누르시오.\n");
     
     getchar();
 }

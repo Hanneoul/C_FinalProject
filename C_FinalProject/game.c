@@ -58,6 +58,7 @@ void init_game(GameState* state) {
     state->player1.last_command = 0;
     state->player1.poison_duration = 0; // 독 지속 시간 초기화
     state->player1.get_command = NULL; // AI 함수 포인터를 NULL로 초기화함.
+    state->player1.secrete_message[0] = '\0'; // 커스텀 메시지 초기화
 
     // 플레이어 2 초기화
     state->player2.id = 2;
@@ -70,6 +71,7 @@ void init_game(GameState* state) {
     state->player2.last_command = 0;
     state->player2.poison_duration = 0;
     state->player2.get_command = NULL; // AI 함수 포인터를 NULL로 초기화함.
+    state->player2.secrete_message[0] = '\0'; // 커스텀 메시지 초기화
 
     state->turn = 1;
     state->game_over = 0;
@@ -348,7 +350,24 @@ static int handle_command_dispatch(Player* self, Player* opponent, int command, 
         return HandleAction(self, opponent, command);
     }
 
+    // ** New: 비밀 메시지 커맨드 처리 **
+    if (command == CMD_SECRETE) {
+        return HandleSecrete(self, opponent, command);
+    }
+
     return ACTION_FAILED; // 정의되지 않은 커맨드
+}
+
+
+static int HandleSecrete(Player* self, Player* opponent, int command) {
+    if (command != CMD_SECRETE) return ACTION_FAILED;
+
+    
+    // 2. 상대 팀명을 포함하여 메시지 생성 및 저장 (snprintf 사용)
+    // NOTE: 메시지는 self의 필드에 저장되며, opponent의 이름이 포함됨.
+    printf("%s : %s", self->name, self->secrete_message);
+
+    return ACTION_SUCCEEDED_NO_FLASH;
 }
 
 

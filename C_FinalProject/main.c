@@ -84,7 +84,7 @@ static int manual_command(const Player* my_info, const Player* opponent_info) {
 
 #define MAX_QUIZ_ENTRIES 30
 #define MAX_NAME_LEN 30
-#define MAX_ANSWER_LEN 20
+#define MAX_ANSWER_LEN 100
 #define QUIZ_FILE_NAME "quiz_data.csv"
 
 // CSV 항목을 저장할 구조체
@@ -122,7 +122,7 @@ static void load_quiz_data() {
 
     // 데이터 파싱
     while (fgets(line, sizeof(line), file) != NULL && quiz_count < MAX_QUIZ_ENTRIES) {
-        if (sscanf(line, "%d,%29[^,],%19[^\n]",
+        if (sscanf(line, "%d,%29[^,],%99[^\n]",
             &quiz_database[quiz_count].cmd_id,
             quiz_database[quiz_count].name,
             quiz_database[quiz_count].answer) == 3)
@@ -223,7 +223,21 @@ int is_skill_unlocked(int registration_key, int skill_command) {
     return self->skill_status[skill_command];
 }
 
+void set_custom_secrete_message(int registration_key, const char* message) {
+    // find_player_by_key_secure_impl 함수를 사용하여 target Player를 안전하게 획득
+    Player* self = find_player_by_key_secure_impl(registration_key);
 
+    if (self == NULL || message == NULL) {
+        printf("ERROR: Invalid key or message for custom taunt setting.\n");
+        return;
+    }
+
+    size_t buffer_size = sizeof(self->secrete_message); // 501
+
+    // 메시지를 custom_taunt 필드에 안전하게 복사
+    strncpy(self->secrete_message, message, buffer_size);
+    self->secrete_message[buffer_size - 1] = '\0'; // 널 종단 보장
+}
 
 
 
