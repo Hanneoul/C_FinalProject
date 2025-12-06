@@ -75,68 +75,144 @@ static int manual_command(const Player* my_info, const Player* opponent_info) {
 
 
 // ----------------------------------------------------
-// ** 학생용 API 구현: 스킬 해금 시도 **
+//  API 구현: 스킬 해금 시도 
 // ----------------------------------------------------
 
-// 모든 퀴즈의 정답
-#define QUIZ_CORRECT_ANSWER "mulmi roll" 
-// (strlen("mulmi roll") == 10)
+// ===============================================
+// ** 1. QUIZ DATA DEFINITIONS **
+// ===============================================
 
-// Key를 사용하여 Player 포인터를 찾는 보조 함수
-static Player* find_player_by_key(int registration_key) {
+#define MAX_QUIZ_ENTRIES 30
+#define MAX_NAME_LEN 30
+#define MAX_ANSWER_LEN 20
+#define QUIZ_FILE_NAME "quiz_data.csv"
+
+// CSV 항목을 저장할 구조체
+typedef struct {
+    int cmd_id;
+    char name[MAX_NAME_LEN];
+    char answer[MAX_ANSWER_LEN];
+} QuizEntry;
+
+// 파일에서 로드될 퀴즈 데이터베이스 (main.c 내부에서만 접근 가능한 static)
+static QuizEntry quiz_database[MAX_QUIZ_ENTRIES];
+static int quiz_count = 0;
+
+
+// ===============================================
+// ** 2. CSV 파일 로드 함수 **
+// ===============================================
+
+// NOTE: 이 함수는 main.c 내에서만 호출 가능한 static 함수가 됩니다.
+static void load_quiz_data() {
+    FILE* file = fopen(QUIZ_FILE_NAME, "r");
+    char line[100];
+    quiz_count = 0;
+
+    if (file == NULL) {
+        printf("ERROR: Quiz data file (%s) not found!\n", QUIZ_FILE_NAME);
+        return;
+    }
+
+    // 첫 줄(헤더) 건너뛰기
+    if (fgets(line, sizeof(line), file) == NULL) {
+        fclose(file);
+        return;
+    }
+
+    // 데이터 파싱
+    while (fgets(line, sizeof(line), file) != NULL && quiz_count < MAX_QUIZ_ENTRIES) {
+        if (sscanf(line, "%d,%29[^,],%19[^\n]",
+            &quiz_database[quiz_count].cmd_id,
+            quiz_database[quiz_count].name,
+            quiz_database[quiz_count].answer) == 3)
+        {
+            quiz_count++;
+        }
+    }
+
+    fclose(file);
+    printf("INFO: %d quiz entries loaded.\n", quiz_count);
+}
+
+
+// ** [주의] CSV 파일 로드 및 퀴즈 데이터 저장 구조체는 이 파일에 정의되어야 함. **
+// (CSV 로직은 너무 길어 생략하고, find_player_by_key만 구현함.)
+
+// Key를 사용하여 Player 포인터를 찾는 유일한 내부 함수 (static game_state에 접근)
+static Player* find_player_by_key_secure_impl(int registration_key) {
     if (registration_key == game_state.player1.reg_key) {
         return &game_state.player1;
     }
     else if (registration_key == game_state.player2.reg_key) {
         return &game_state.player2;
     }
-    return NULL; // 인증 실패
+    return NULL;
 }
 
 
 // --- 1. 스킬 해금 시도 함수 구현 ---
 void attempt_skill_unlock(int registration_key, int skill_command, const char* quiz_answer) {
-    Player* self = find_player_by_key(registration_key);
+    // 1. 보안 인증: Player 포인터 안전하게 획득
+    Player* self = find_player_by_key_secure_impl(registration_key);
 
-    // 1. 보안 검사: Key가 유효한지 확인
-    if (self == NULL) {
-        //printf("%d 플레이어 %d 스킬 : 해금 실패\n", registration_key, skill_command);
-        return; // 유효하지 않은 Key, 해금 시도 실패
-    }
-
-    // 2. 커맨드 유효성 및 배열 경계 검사
-    if (skill_command >= MAX_COMMAND_ID || skill_command < 1) {
-        //printf("%d 플레이어 %d 스킬 : 해금 실패\n", registration_key, skill_command);
+    // 2. 유효성 검사
+    if (self == NULL || skill_command >= MAX_COMMAND_ID || skill_command < 1) {
         return;
     }
 
-    // 3. 정답 확인 (strcmp 사용)
-    if (strcmp(quiz_answer, QUIZ_CORRECT_ANSWER) == 0) {
-        // 정답일 경우 해당 스킬 해금
-        self->skill_status[skill_command] = 1;
+    // 3. 정답 찾기 로직 (CSV 데이터베이스 사용)
+    const char* correct_answer = NULL;
+    int target_cmd_id = skill_command;
 
-        // **참고: Blink 및 H/V Attack 계열의 동시 해금 처리**
-        // Blink의 경우 (CMD_BLINK_UP, 8)을 맞추면 8, 9, 10, 11 모두 해금
+    // 계열 스킬의 경우, 기본 ID로 정답을 찾도록 ID 통일 (CSV 중복 방지)
+    // CMD_BLINK 계열은 CMD_BLINK_UP(8)만으로 찾도록 통일
+    if (skill_command >= CMD_BLINK_UP && skill_command <= CMD_BLINK_RIGHT) {
+        target_cmd_id = CMD_BLINK_UP;
+    }
+    // H/V Attack 계열은 CMD_H_ATTACK(17)만으로 찾도록 통일
+    else if (skill_command == CMD_V_ATTACK) {
+        target_cmd_id = CMD_H_ATTACK;
+    }
+
+    // static quiz_database 순회
+    for (int i = 0; i < quiz_count; i++) {
+        if (quiz_database[i].cmd_id == target_cmd_id) {
+            correct_answer = quiz_database[i].answer;
+            break;
+        }
+    }
+
+    // 4. 정답 확인 및 스킬 상태 업데이트
+    if (correct_answer != NULL && strcmp(quiz_answer, correct_answer) == 0) {
+        // 정답! 해당 스킬과 계열 스킬 해금
+
+        // Blink 계열 모두 해금 (8, 9, 10, 11)
         if (skill_command >= CMD_BLINK_UP && skill_command <= CMD_BLINK_RIGHT) {
             for (int i = CMD_BLINK_UP; i <= CMD_BLINK_RIGHT; i++) {
                 if (i < MAX_COMMAND_ID) self->skill_status[i] = 1;
             }
         }
-        // H/V Attack의 경우 (CMD_H_ATTACK, 17)을 맞추면 17, 18 모두 해금
-        if (skill_command == CMD_H_ATTACK || skill_command == CMD_V_ATTACK) {
+        // H/V Attack 계열 모두 해금 (17, 18)
+        else if (skill_command == CMD_H_ATTACK || skill_command == CMD_V_ATTACK) {
             if (CMD_H_ATTACK < MAX_COMMAND_ID) self->skill_status[CMD_H_ATTACK] = 1;
             if (CMD_V_ATTACK < MAX_COMMAND_ID) self->skill_status[CMD_V_ATTACK] = 1;
         }
+        // 나머지 단일 스킬 해금
+        else {
+            self->skill_status[skill_command] = 1;
+        }
     }
-    else
-        printf("%d 플레이어 %d 스킬 : 해금 실패\n", registration_key, skill_command);
-
 }
 
 
-// --- 2. 스킬 해금 여부 확인 함수 구현 ---
+// ----------------------------------------------------
+// ** 2. EXTERN API: 스킬 해금 여부 확인 함수 구현 **
+// ----------------------------------------------------
+
+// 이 함수는 extern으로 선언되어 학생 파일에서 호출 가능합니다.
 int is_skill_unlocked(int registration_key, int skill_command) {
-    Player* self = find_player_by_key(registration_key);
+    Player* self = find_player_by_key_secure_impl(registration_key);
 
     // 1. 보안 검사 및 커맨드 유효성 검사
     if (self == NULL || skill_command >= MAX_COMMAND_ID || skill_command < 1) {
@@ -144,7 +220,7 @@ int is_skill_unlocked(int registration_key, int skill_command) {
     }
 
     // 2. 해금 상태 반환
-    return self->skill_status[skill_command]; // 0 (잠김) 또는 1 (해금) 반환
+    return self->skill_status[skill_command];
 }
 
 
@@ -155,6 +231,7 @@ int main() {
 
     enable_ansi_escape_codes();
     init_game(&game_state);
+    load_quiz_data();
 
     // ********** 학생 AI 등록 (명시적 호출) **********
     // 학생들에게 미리 고지된 함수명을 사용하여 등록 함수를 호출함.

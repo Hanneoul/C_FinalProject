@@ -126,7 +126,43 @@ void render_info(const GameState* state) {
     printf("------------------------------------------------------------------\n");
 
     if (state->game_over == 0) {
-        printf(" >> 커맨드: 1(상), 2(하), 3(좌), 4(우), 5(공격)\n");
+        printf(" >> 해금 커맨드: ");
+        int count = 0;
+
+        // CMD_UP (1) 부터 CMD_V_ATTACK (18)까지 순회
+        for (int i = 1; i < MAX_COMMAND_ID; i++) {
+            // 해당 CMD_ID가 해금되었을 경우 (skill_status[i] == 1)
+            if (state->player1.skill_status[i] == 1) {
+                // 커맨드 인덱스와 이름을 출력합니다.
+                printf("%d(%s) ", i, command_names[i]);
+                count++;
+
+                // 가독성을 위해 적절한 개수마다 줄 바꿈 (예: 5개마다)
+                if (count % 5 == 0) {
+                    printf("\n                  "); // 들여쓰기
+                }
+            }
+        }
+        printf("\n"); // 최종 줄 바꿈
+
+        printf(" >> 해금 커맨드: ");
+        count = 0;
+
+        // CMD_UP (1) 부터 CMD_V_ATTACK (18)까지 순회
+        for (int i = 1; i < MAX_COMMAND_ID; i++) {
+            // 해당 CMD_ID가 해금되었을 경우 (skill_status[i] == 1)
+            if (state->player2.skill_st%%atus[i] == 1) {
+                // 커맨드 인덱스와 이름을 출력합니다.
+                printf("%d(%s) ", i, command_names[i]);
+                count++;
+
+                // 가독성을 위해 적절한 개수마다 줄 바꿈 (예: 5개마다)
+                if (count % 5 == 0) {
+                    printf("\n                  "); // 들여쓰기
+                }
+            }
+        }
+        printf("\n"); // 최종 줄 바꿈
     }
     else {
         move_cursor(1, 5); // 승리 메시지 위치 이동

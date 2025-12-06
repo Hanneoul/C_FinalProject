@@ -54,17 +54,22 @@ void student1_ai_entry() {
     
     int my_secret_key = register_player_ai("TEAM-ALPHA", simple_killer_ai);
 
-    attempt_skill_unlock(my_secret_key, CMD_POISON, "mulmi roll");
+    attempt_skill_unlock(my_secret_key, CMD_POISON, "multimedia f");
     if (is_skill_unlocked(my_secret_key, CMD_POISON))
-    {
         printf("TEAM-ALPHA : CMD_POISON 해금 완료\n");
-    }
     else
-    {
         printf("TEAM-ALPHA : CMD_POISON 해금 실패 ㅜㅜ\n");
-    }
+
+
+
+    
+    attempt_skill_unlock(my_secret_key, CMD_BLINK_DOWN, "multimedia");
+    if (is_skill_unlocked(my_secret_key, CMD_BLINK_DOWN))
+        printf("TEAM-ALPHA : CMD_BLINK_DOWN 해금 완료\n");
+    else
+        printf("TEAM-ALPHA : CMD_BLINK_DOWN 해금 실패 ㅜㅜ\n");
 
     printf("%d 플레이어 : 초기화 완료. 아무키나 누르시오.\n", my_secret_key);
     
-    getch();
+    getchar();
 }

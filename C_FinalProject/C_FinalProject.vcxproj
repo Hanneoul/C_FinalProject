@@ -129,7 +129,6 @@
   <ItemGroup>
     <ClCompile Include="ansi_util.c" />
     <ClCompile Include="game.c" />
-    <ClCompile Include="input.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="PlayerA.c" />
     <ClCompile Include="PlayerB.c" />
@@ -140,7 +139,6 @@
     <ClInclude Include="ansi_util.h" />
     <ClInclude Include="api.h" />
     <ClInclude Include="game.h" />
-    <ClInclude Include="input.h" />
     <ClInclude Include="registration.h" />
     <ClInclude Include="render.h" />
     <ClInclude Include="sound.h" />

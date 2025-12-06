@@ -6,7 +6,7 @@
 #include <time.h>   
 #include <string.h> // strncpy 사용
 
-// game.c 파일 내부 (Static API 정의 전에 추가)
+
 
 
 
