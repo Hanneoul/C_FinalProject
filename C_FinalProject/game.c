@@ -132,9 +132,13 @@ static void calculate_1step_move(int* x, int* y, int command) {
 
 
 // ** 내부 액션 상태 코드 정의 **
-#define ACTION_FAILED                   0
-#define ACTION_SUCCEEDED_NO_FLASH       1 // 회복, 휴식, 독 부여 등
-#define ACTION_SUCCEEDED_AND_ATTACKED   2 // 기본 공격, 강타, 자폭 등 (플래시 발생)
+#define ACTION_FAILED                      0
+#define ACTION_SUCCEEDED_NO_FLASH          1 // 휴식, 도발 등
+#define ACTION_SUCCEEDED_AND_ATTACKED      2 // 기본 공격, 강타, 자폭 등 (플래시 발생)
+#define ACTION_SUCCEEDED_AND_V_ATTACKED    3 // 세로 마법
+#define ACTION_SUCCEEDED_AND_H_ATTACKED    4 // 가로 마법
+#define ACTION_SUCCEEDED_AND_POISON        5 // 독 마법
+#define ACTION_SUCCEEDED_AND_HEALED        6 // 회복, 휴식 마법
 
 // ===============================================
 // ** Static API: 커맨드별 처리 함수 선언 (새로운 분류) **
@@ -410,6 +414,8 @@ static int HandleHeal(Player* self, int command) {
         if (self->mp >= 1) {
             self->mp -= 1;
             self->hp += 1;
+            if (self->hp > 5)
+                self->hp = 5;
             return ACTION_SUCCEEDED_NO_FLASH;
         }
     }
@@ -419,12 +425,16 @@ static int HandleHeal(Player* self, int command) {
             int mp_recovered = self->mp - 2;
             self->mp -= 2;
             self->hp += (mp_recovered > 0 ? mp_recovered : 0);
+            if (self->hp > 5)
+                self->hp = 5;
             return ACTION_SUCCEEDED_NO_FLASH;
         }
     }
     else if (command == CMD_REST) {
         // 휴식: MP 1 회복
         self->mp += 1;
+        if (self->mp > 5)
+            self->mp = 5;
         return ACTION_SUCCEEDED_NO_FLASH;
     }
     return ACTION_FAILED;

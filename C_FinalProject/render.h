@@ -33,7 +33,7 @@ static const char* command_names[CMD_COUNT] = {
     "휴식", // 15: CMD_REST
     "자폭", // 16: CMD_SELF_DESTRUCT
     "가로공격", // 17: CMD_H_ATTACK
-    "세로공격"  // 18: CMD_V_ATTACK
+    "세로공격",  // 18: CMD_V_ATTACK
     "비밀"    // 19: CMD_SECRETE
 };
 
