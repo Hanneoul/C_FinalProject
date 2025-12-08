@@ -432,7 +432,7 @@ static int HandleHeal(Player* self, int command) {
     }
     else if (command == CMD_REST) {
         // 휴식: MP 2 회복
-        self->mp += 2;
+        self->mp += 1;
         if (self->mp > 5)
             self->mp = 5;
         return ACTION_SUCCEEDED_NO_FLASH;
@@ -446,7 +446,7 @@ static int HandleMagic(Player* self, Player* opponent, int command) {
         // 독: MP 4 소모, DoT 3턴 부여
         if (self->mp >= 5) {
             self->mp -= 5;
-            opponent->poison_duration = 3;
+            opponent->poison_duration = 2;
             return ACTION_SUCCEEDED_NO_FLASH;
         }
     }
