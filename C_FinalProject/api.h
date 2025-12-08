@@ -46,7 +46,7 @@ extern int get_player_id(const Player* p);
 #define CMD_HEAL_ALL       13   //해금필요 스킬 : 회복2 (MP 2, 남은 MP만큼 HP 회복)
 #define CMD_RANGE_ATTACK   14   //해금필요 스킬 : 원거리 공격 (MP 1, 거리 2 타격)
 #define CMD_REST           15   //기본 스킬 :	  휴식 (MP 2 회복)
-#define CMD_SELF_DESTRUCT  16   //해금필요 스킬 : 폭주 (MP 5, HP 2이하 일때, 상대 3 데미지)
+#define CMD_SELF_DESTRUCT  16   //해금필요 스킬 : 폭주 (MP 5소모, HP 2이하 일때 발동가능, 상대 3 데미지)
 #define CMD_H_ATTACK       17   //해금필요 스킬 : 가로 공격 (MP 3, 가로 전체 1 데미지)
 #define CMD_V_ATTACK       18   //해금필요 스킬 : 세로 공격 (MP 3, 세로 전체 1 데미지)
 #define CMD_SECRETE        19   //해금필요 스킬 : 비밀 스킬 (소모없음, 채팅창에 메시지 적음)
