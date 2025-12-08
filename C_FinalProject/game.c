@@ -431,8 +431,8 @@ static int HandleHeal(Player* self, int command) {
         }
     }
     else if (command == CMD_REST) {
-        // 휴식: MP 1 회복
-        self->mp += 1;
+        // 휴식: MP 2 회복
+        self->mp += 2;
         if (self->mp > 5)
             self->mp = 5;
         return ACTION_SUCCEEDED_NO_FLASH;
@@ -444,8 +444,8 @@ static int HandleHeal(Player* self, int command) {
 static int HandleMagic(Player* self, Player* opponent, int command) {
     if (command == CMD_POISON) {
         // 독: MP 4 소모, DoT 3턴 부여
-        if (self->mp >= 4) {
-            self->mp -= 4;
+        if (self->mp >= 5) {
+            self->mp -= 5;
             opponent->poison_duration = 3;
             return ACTION_SUCCEEDED_NO_FLASH;
         }
@@ -495,10 +495,10 @@ static int HandleAction(Player* self, Player* opponent, int command) {
         }
     }
     else if (command == CMD_SELF_DESTRUCT) {
-        // 자폭: MP 5, HP 3 소모, 상대 3 데미지 -> [MP/HP 조건] 및 자원 소모만 처리
-        if (self->mp >= 5 && self->hp > 3) {
+        // 폭주: MP 5, HP 2이하 일때, 상대 3 데미지 -> [MP/HP 조건] 및 자원 소모만 처리
+        if (self->mp >= 5 && self->hp < 3) {
             self->mp -= 5;
-            self->hp -= 3; // 자기 HP 소모는 Cost이므로 유지
+            self->hp -= 1; // 자기 HP 소모는 Cost이므로 유지
             // NOTE: opponent->hp -= 3; (삭제됨)
             return ACTION_SUCCEEDED_AND_ATTACKED;
         }

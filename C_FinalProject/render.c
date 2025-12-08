@@ -101,15 +101,15 @@ void render_game(const GameState* state) {
 
     // P1의 도발 메시지 출력
     if (state->player1.secrete_message[0] != '\0') {
-        set_foreground_color(ANSI_CYAN); // P1 메시지는 CYAN으로
-        printf(">> %s", state->player1.secrete_message);
+        set_foreground_color(ANSI_RED); // P1 메시지는 CYAN으로
+        printf("[%s] %s\n", state->player1.name, state->player1.secrete_message);
         reset_color();
     }
 
     // P2의 도발 메시지 출력
     if (state->player2.secrete_message[0] != '\0') {
-        set_foreground_color(ANSI_MAGENTA); // P2 메시지는 MAGENTA로
-        printf(">> %s", state->player2.secrete_message);
+        set_foreground_color(ANSI_BLUE); // P2 메시지는 MAGENTA로
+        printf("[%s] %s\n", state->player2.name, state->player2.secrete_message);
         reset_color();
     }
 }
@@ -123,8 +123,8 @@ void render_info(const GameState* state) {
     set_foreground_color(ANSI_RED);
     printf(" P1(%c) ", state->player1.symbol);
     reset_color();
-    printf("HP:%d/5 | MP:%d/5 | (X,Y):%d,%d | LastCmd:%d",
-        state->player1.hp, state->player1.mp, state->player1.x, state->player1.y, state->player1.last_command);
+    printf("HP:%d/5 | MP:%d/5 | (X,Y):%d,%d | poison duration:%d | LastCmd:%d",
+        state->player1.hp, state->player1.mp, state->player1.x, state->player1.y, state->player1.poison_duration, state->player1.last_command);
 
     printf("\n");
 
@@ -132,8 +132,8 @@ void render_info(const GameState* state) {
     set_foreground_color(ANSI_BLUE);
     printf(" P2(%c) ", state->player2.symbol);
     reset_color();
-    printf("HP:%d/5 | MP:%d/5 | (X,Y):%d,%d | LastCmd:%d",
-        state->player2.hp, state->player2.mp, state->player2.x, state->player2.y, state->player2.last_command);
+    printf("HP:%d/5 | MP:%d/5 | (X,Y):%d,%d | poison duration:%d | LastCmd:%d",
+        state->player2.hp, state->player2.mp, state->player2.x, state->player2.y, state->player1.poison_duration, state->player2.last_command);
 
     printf("\n");
 
@@ -200,7 +200,7 @@ void render_info(const GameState* state) {
     }
 
     // 커맨드 입력을 위해 커서를 이동시킴
-    move_cursor(1, 7);
+    move_cursor(1, 25);
 }
 
 // 새로운 보조 함수: 두 좌표를 포함하는 영역의 경계 계산
@@ -218,6 +218,116 @@ static void get_min_max_coords(int x1, int y1, int x2, int y2, int* min_x, int* 
     if (*max_y > MAP_HEIGHT) *max_y = MAP_HEIGHT;
 }
 
+// 전체 행을 칠하는 함수 (가로 공격)
+void render_horizontal_flash(const GameState* state, const Player* attacker) {
+    int target_y = attacker->y;
+    int bg_color = ANSI_BG_RED;
+
+    hide_cursor();
+
+    // 전체 행을 순회하며 칠함
+    for (int x = 1; x <= MAP_WIDTH; x++) {
+        // 커서 이동
+        move_cursor(1 + (x * 2) - 1, 14 + target_y);
+
+        // 배경색 설정 및 내용 출력 (render_effect_area와 유사한 출력 로직 사용)
+        set_background_color(bg_color);
+        // ... (내용 출력 로직) ... // NOTE: 이 부분은 render_game_with_bg의 셀 출력 로직을 사용해야 함
+
+        int is_player1 = (state->player1.x == x && state->player1.y == target_y);
+        int is_player2 = (state->player2.x == x && state->player2.y == target_y);
+
+        if (is_player1) {
+            set_foreground_color(ANSI_RED);
+            printf(" %c", state->player1.symbol);
+        }
+        else if (is_player2) {
+            set_foreground_color(ANSI_BLUE);
+            printf(" %c", state->player2.symbol);
+        }
+        else {
+            set_foreground_color(ANSI_WHITE);
+            printf(" .");
+        }
+        reset_color();
+    }
+}
+
+// 전체 열을 칠하는 함수 (세로 공격)
+void render_vertical_flash(const GameState* state, const Player* attacker, int duration_ms) {
+    // render_horizontal_flash와 동일한 로직을 사용하되, x 대신 y를 순회함
+    int target_x = attacker->x;
+    int bg_color = ANSI_BG_RED;
+
+    hide_cursor();
+
+    // 전체 행을 순회하며 칠함
+    for (int y = 1; y <= MAP_HEIGHT; y++) {
+        // 커서 이동
+        move_cursor(1 + (target_x * 2) - 1, 14 + y);
+
+        // 배경색 설정 및 내용 출력 (render_effect_area와 유사한 출력 로직 사용)
+        set_background_color(bg_color);
+        // ... (내용 출력 로직) ... // NOTE: 이 부분은 render_game_with_bg의 셀 출력 로직을 사용해야 함
+
+        int is_player1 = (state->player1.x == target_x && state->player1.y == y);
+        int is_player2 = (state->player2.x == target_x && state->player2.y == y);
+
+        if (is_player1) {
+            set_foreground_color(ANSI_RED);
+            printf(" %c", state->player1.symbol);
+        }
+        else if (is_player2) {
+            set_foreground_color(ANSI_BLUE);
+            printf(" %c", state->player2.symbol);
+        }
+        else {
+            set_foreground_color(ANSI_WHITE);
+            printf(" .");
+        }
+        reset_color();
+    }
+}
+
+// 주변 1칸 영역에 효과를 렌더링하는 범용 함수 (Heal, Poison 등에 사용)
+void render_effect_area(const GameState* state, const Player* target, int bg_color) {
+    int center_x = target->x;
+    int center_y = target->y;
+
+    hide_cursor();
+
+    // 주변 1칸(3x3 영역)을 반복
+    for (int y = center_y - 1; y <= center_y + 1; y++) {
+        for (int x = center_x - 1; x <= center_x + 1; x++) {
+            // 맵 경계 체크 (MAP_WIDTH/HEIGHT는 game.h에 정의되어 있다고 가정)
+            if (x >= 1 && x <= MAP_WIDTH && y >= 1 && y <= MAP_HEIGHT) {
+                // 커서 이동 (맵 시작 Y=14)
+                move_cursor(1 + (x * 2) - 1, 14 + y);
+
+                // 배경색 설정 (색칠)
+                set_background_color(bg_color);
+
+                // 내용 출력 (플레이어 위치일 경우 심볼 출력, 아니면 '.')
+                int is_player1 = (state->player1.x == x && state->player1.y == y);
+                int is_player2 = (state->player2.x == x && state->player2.y == y);
+
+                if (is_player1) {
+                    set_foreground_color(ANSI_RED);
+                    printf(" %c", state->player1.symbol);
+                }
+                else if (is_player2) {
+                    set_foreground_color(ANSI_BLUE);
+                    printf(" %c", state->player2.symbol);
+                }
+                else {
+                    set_foreground_color(ANSI_WHITE);
+                    printf(" .");
+                }
+                reset_color();
+            }
+        }
+    }
+}
 
 // --- 새로운 지역화된 플래시 렌더링 함수 ---
 void render_localized_flash(const GameState* state, int flash_bg_code) {
@@ -262,3 +372,4 @@ void render_localized_flash(const GameState* state, int flash_bg_code) {
         }
     }
 }
+
