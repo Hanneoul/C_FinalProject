@@ -36,7 +36,7 @@ extern int get_player_id(const Player* p);
 #define CMD_LEFT			3	//기본 스킬 :	  좌로 이동
 #define CMD_RIGHT			4	//기본 스킬 :	  우로 이동
 #define CMD_ATTACK			5	//기본 스킬 :	  기본 범위 1짜리 공격
-#define CMD_POISON          6 	//해금필요 스킬 : 독 (MP 5, 도트데미지 1 for 2 turns)
+#define CMD_POISON          6 	//해금필요 스킬 : 독 (MP 5, 도트데미지 1 for 3 turns)
 #define CMD_STRIKE          7   //해금필요 스킬 : 강타 (MP 2, Damage 2, 근접)
 #define CMD_BLINK_UP        8   //해금필요 스킬 : 점멸 (상) (MP 1, 2칸 이동)
 #define CMD_BLINK_DOWN      9   //해금필요 스킬 : 점멸 (하) (MP 1, 2칸 이동)
@@ -46,7 +46,7 @@ extern int get_player_id(const Player* p);
 #define CMD_HEAL_ALL       13   //해금필요 스킬 : 회복2 (MP 2, 남은 MP만큼 HP 회복)
 #define CMD_RANGE_ATTACK   14   //해금필요 스킬 : 원거리 공격 (MP 1, 거리 2 타격)
 #define CMD_REST           15   //기본 스킬 :	  휴식 (MP 1 회복)
-#define CMD_SELF_DESTRUCT  16   //해금필요 스킬 : 폭주 (MP 5소모, HP 2이하 일때 발동가능, 상대 3 데미지)
+#define CMD_BLESS		   16   //해금필요 스킬 : 축복 (MP 2소모, 저주 해제)
 #define CMD_H_ATTACK       17   //해금필요 스킬 : 가로 공격 (MP 3, 가로 전체 1 데미지)
 #define CMD_V_ATTACK       18   //해금필요 스킬 : 세로 공격 (MP 3, 세로 전체 1 데미지)
 #define CMD_SECRETE        19   //해금필요 스킬 : 비밀 스킬 (소모없음, 채팅창에 메시지 적음)

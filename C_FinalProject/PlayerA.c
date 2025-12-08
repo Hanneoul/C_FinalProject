@@ -150,11 +150,11 @@ void student1_ai_entry() {
     else
         printf("TEAM-ALPHA : CMD_RANGE_ATTACK 해금 실패 ㅜㅜ\n");
 
-    attempt_skill_unlock(my_secret_key, CMD_SELF_DESTRUCT, "T");
-    if (is_skill_unlocked(my_secret_key, CMD_SELF_DESTRUCT))
-        printf("TEAM-ALPHA : CMD_SELF_DESTRUCT 해금 완료\n");
+    attempt_skill_unlock(my_secret_key, CMD_BLESS, "T");
+    if (is_skill_unlocked(my_secret_key, CMD_BLESS))
+        printf("TEAM-ALPHA : CMD_BLESS 해금 완료\n");
     else
-        printf("TEAM-ALPHA : CMD_SELF_DESTRUCT 해금 실패 ㅜㅜ\n");
+        printf("TEAM-ALPHA : CMD_BLESS 해금 실패 ㅜㅜ\n");
 
     attempt_skill_unlock(my_secret_key, CMD_H_ATTACK, "Inf_03");
     if (is_skill_unlocked(my_secret_key, CMD_H_ATTACK))
