@@ -334,7 +334,7 @@ static int handle_command_dispatch(Player* self, Player* opponent, int command, 
 
 
     // --- 1. 회복 및 휴식 (Heal Logic) ---
-    if (command == CMD_HEAL || command == CMD_HEAL_ALL || command == CMD_REST) {
+    if (command == CMD_HEAL || command == CMD_HEAL_ALL || command == CMD_REST || command == CMD_BLESS) {
         return HandleHeal(self, command);
     }
 
@@ -452,7 +452,7 @@ static int HandleHeal(Player* self, int command) {
 // --- Static API: 3. HandleMagic (마법/전략 공격) ---
 static int HandleMagic(Player* self, Player* opponent, int command) {
     if (command == CMD_POISON) {
-        // 독: MP 4 소모, DoT 3턴 부여
+        // 독: MP 5 소모, DoT 2턴 부여
         if (self->mp >= 5) {
             self->mp -= 5;
             opponent->poison_duration = 2;
