@@ -3,7 +3,7 @@
 
 #define MAX_COMMAND_ID 20
 
-#define MAP_WIDTH 15
+#define MAP_WIDTH 7
 #define MAP_HEIGHT 7
 
 #define FLASH_NONE 0

@@ -253,14 +253,14 @@ int execute_turn(GameState* state, int p1_command, int p2_command) {
 
     // --- 4.3. 물리 공격 (Action Phase) ---
     // 1순위 공격자 실행
-    if (first_wants_attack && (first_command == CMD_ATTACK || first_command == CMD_STRIKE || first_command == CMD_RANGE_ATTACK || first_command == CMD_SELF_DESTRUCT) && first_attacker->hp > 0) {
+    if (first_wants_attack && (first_command == CMD_ATTACK || first_command == CMD_STRIKE || first_command == CMD_RANGE_ATTACK) && first_attacker->hp > 0) {
         if (ApplyFinalDamage(first_attacker, second_attacker, first_command)) {
             SET_ATTACKED_FLAG(first_attacker);
         }
     }
 
     // 2순위 공격자 실행 (1순위 공격에 죽지 않았을 경우)
-    if (second_wants_attack && (second_command == CMD_ATTACK || second_command == CMD_STRIKE || second_command == CMD_RANGE_ATTACK || second_command == CMD_SELF_DESTRUCT) && second_attacker->hp > 0 && first_attacker->hp > 0) {
+    if (second_wants_attack && (second_command == CMD_ATTACK || second_command == CMD_STRIKE || second_command == CMD_RANGE_ATTACK) && second_attacker->hp > 0 && first_attacker->hp > 0) {
         if (ApplyFinalDamage(second_attacker, first_attacker, second_command)) {
             SET_ATTACKED_FLAG(second_attacker);
         }
@@ -334,7 +334,7 @@ static int handle_command_dispatch(Player* self, Player* opponent, int command, 
 
 
     // --- 1. 회복 및 휴식 (Heal Logic) ---
-    if (command == CMD_HEAL || command == CMD_HEAL_ALL || command == CMD_REST) {
+    if (command == CMD_HEAL || command == CMD_HEAL_ALL || command == CMD_REST || command == CMD_BLESS) {
         return HandleHeal(self, command);
     }
 
@@ -349,8 +349,8 @@ static int handle_command_dispatch(Player* self, Player* opponent, int command, 
     }
 
     // --- 4. 직접 공격 커맨드 (Action Logic) ---
-    // (CMD_ATTACK, CMD_STRIKE, CMD_RANGE_ATTACK, CMD_SELF_DESTRUCT)
-    if (command == CMD_ATTACK || command == CMD_STRIKE || command == CMD_RANGE_ATTACK || command == CMD_SELF_DESTRUCT) {
+    // (CMD_ATTACK, CMD_STRIKE, CMD_RANGE_ATTACK)
+    if (command == CMD_ATTACK || command == CMD_STRIKE || command == CMD_RANGE_ATTACK) {
         return HandleAction(self, opponent, command);
     }
 
@@ -431,10 +431,19 @@ static int HandleHeal(Player* self, int command) {
         }
     }
     else if (command == CMD_REST) {
-        // 휴식: MP 1 회복
-        self->mp += 1;
+        // 휴식: MP 2 회복
+        self->mp += 2;
         if (self->mp > 5)
             self->mp = 5;
+        return ACTION_SUCCEEDED_NO_FLASH;
+    }
+    else if (command == CMD_BLESS) {
+        // 축복: MP 2 저주해제
+        if (self->mp >= 2)
+        {
+            self->mp -= 2;
+            self->poison_duration = 0;
+        }
         return ACTION_SUCCEEDED_NO_FLASH;
     }
     return ACTION_FAILED;
@@ -443,10 +452,10 @@ static int HandleHeal(Player* self, int command) {
 // --- Static API: 3. HandleMagic (마법/전략 공격) ---
 static int HandleMagic(Player* self, Player* opponent, int command) {
     if (command == CMD_POISON) {
-        // 독: MP 4 소모, DoT 3턴 부여
-        if (self->mp >= 4) {
-            self->mp -= 4;
-            opponent->poison_duration = 3;
+        // 독: MP 5 소모, DoT 2턴 부여
+        if (self->mp >= 5) {
+            self->mp -= 5;
+            opponent->poison_duration = 2;
             return ACTION_SUCCEEDED_NO_FLASH;
         }
     }
@@ -494,15 +503,7 @@ static int HandleAction(Player* self, Player* opponent, int command) {
             return ACTION_SUCCEEDED_AND_ATTACKED;
         }
     }
-    else if (command == CMD_SELF_DESTRUCT) {
-        // 자폭: MP 5, HP 3 소모, 상대 3 데미지 -> [MP/HP 조건] 및 자원 소모만 처리
-        if (self->mp >= 5 && self->hp > 3) {
-            self->mp -= 5;
-            self->hp -= 3; // 자기 HP 소모는 Cost이므로 유지
-            // NOTE: opponent->hp -= 3; (삭제됨)
-            return ACTION_SUCCEEDED_AND_ATTACKED;
-        }
-    }
+    
     return ACTION_FAILED;
 }
 
@@ -533,20 +534,14 @@ static int ApplyFinalDamage(Player* self, Player* opponent, int command) {
             return 1;
         }
     }
-    // 4. 자폭 (CMD_SELF_DESTRUCT)
-    else if (command == CMD_SELF_DESTRUCT) {
-        // 자폭 비용은 이미 지불됨. 상대에게 최종 데미지만 적용함.
-        opponent->hp -= 3;
-        return 1;
-    }
-    // 5. 가로 공격 (CMD_H_ATTACK)
+    // 4. 가로 공격 (CMD_H_ATTACK)
     else if (command == CMD_H_ATTACK) {
         if (self->y == opponent->y) {
             opponent->hp -= 1;
             return 1;
         }
     }
-    // 6. 세로 공격 (CMD_V_ATTACK)
+    // 5. 세로 공격 (CMD_V_ATTACK)
     else if (command == CMD_V_ATTACK) {
         if (self->x == opponent->x) {
             opponent->hp -= 1;

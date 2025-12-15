@@ -6,12 +6,9 @@
 #include "game.h"
 #include "render.h"
 #include "api.h"
-#include "registration.h"
-
 
 // GameState를 static으로 선언하여 register_player_ai에서 접근 가능하도록 함.
 static GameState game_state;
-
 static int next_slot_id_to_register = 1;
 
 // API 함수 구현: extern으로 선언된 register_player_ai 함수의 실제 구현부임.
@@ -53,14 +50,14 @@ static int manual_command(const Player* my_info, const Player* opponent_info) {
     int command;
 
     // 커서 이동 및 기존 입력부 클리어 (render.c의 move_cursor 위치와 일치시켜야 함)
-    move_cursor(1, 7);
+    move_cursor(1, 13);
     printf("                                                                        \n");
-    move_cursor(1, 7);
+    move_cursor(1, 13);
 
     if (my_info->id == 1) set_foreground_color(ANSI_RED);
     else set_foreground_color(ANSI_BLUE);
 
-    printf("%s(%c)> 커맨드 입력 (1/2/3/4/5): ", my_info->name, my_info->symbol);
+    printf("%s(%c)> 커맨드 입력 : ", my_info->name, my_info->symbol);
     reset_color();
 
     if (scanf("%d", &command) != 1) {

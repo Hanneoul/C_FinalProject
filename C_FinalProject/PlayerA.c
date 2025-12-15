@@ -32,19 +32,20 @@
 #include <stdlib.h> 
 #include <stdio.h> 
 
-
+//학생의 고유번호를 발급받아 저장할 변수
+int my_secret_key;
  // =================================================================================================
  // [학생 구현 영역 1] AI 로직 구현부
  // =================================================================================================
 
- // 간단한 맨하탄 거리 계산 유틸리티 함수
+ // [AI용 별도 제작함수] 간단한 맨하탄 거리 계산 유틸리티 함수
 static int calculate_distance(const Player* p1, const Player* p2) {
     int dx = abs(get_player_x(p1) - get_player_x(p2));
     int dy = abs(get_player_y(p1) - get_player_y(p2));
     return dx + dy;
 }
 
-// MP를 사용하지 않고 공격만 시도하는 AI 로직 (예시)
+// [AI로직] MP를 사용하지 않고 공격만 시도하는 AI 로직 (예시)
 int simple_killer_ai(const Player* my_info, const Player* opponent_info) {
     int distance = calculate_distance(my_info, opponent_info);
 
@@ -55,15 +56,19 @@ int simple_killer_ai(const Player* my_info, const Player* opponent_info) {
 
     // 1. 공격 판정 
     if (distance <= 1) {
+        //대사를 넣을 수 있는 기믹 (19번 스킬 해금시 사용가능)
+        set_custom_secrete_message(my_secret_key, "보통 펀치!!!");
         return CMD_ATTACK;
     }
 
     // 2. 추격 이동 (X축 우선)
     if (my_x != opp_x) {
         if (my_x < opp_x) {
+            set_custom_secrete_message(my_secret_key, "오른쪽으로 슈슉!!!");
             return CMD_RIGHT;
         }
         else {
+            set_custom_secrete_message(my_secret_key, "왼쪽으로 슈슉!!!");
             return CMD_LEFT;
         }
     }
@@ -71,14 +76,17 @@ int simple_killer_ai(const Player* my_info, const Player* opponent_info) {
     // 3. Y축 추격
     if (my_y != opp_y) {
         if (my_y < opp_y) {
+            set_custom_secrete_message(my_secret_key, "아래로 간다!!!");
             return CMD_DOWN;
         }
         else {
+            set_custom_secrete_message(my_secret_key, "위로 올라간다!!!");
             return CMD_UP;
         }
     }
 
     // 4. 예외 상황 
+    set_custom_secrete_message(my_secret_key, "예외상황이구나 귀여운 은석펀치!!!");
     return CMD_ATTACK;
 }
 
@@ -89,17 +97,28 @@ int simple_killer_ai(const Player* my_info, const Player* opponent_info) {
 
 // 이 함수는 main.c에서 extern으로 호출되는 학생 코드의 진입점입니다.
 void student1_ai_entry() {
+    // 이 섹션의 모든 코드는 예제를 참고하세요
 
-    // 이 섹션의 모든 코드는 반드시 이 예제와 같이 구현되어야 합니다. (노가다 섹션)
 
-    int my_secret_key = register_player_ai("TEAM-ALPHA", simple_killer_ai);
+    // 팀이름과 AI함수를 NPC에 등록하는 register_player_ai함수와 리턴값으로 플레이어 고유번호 발급하는 코드
+    // 주석한 부분처럼 함수에 아무것도 등록이 안되면 NPC가 아니라 플레이어로써 플레이할 수 있는 모드가 실행됩니다.
+    my_secret_key = register_player_ai("TEAM-ALPHA", simple_killer_ai);
+    //my_secret_key = register_player_ai("TEAM-ALPHA", 0);
 
     // ------------------------------------------------------------------
     // [COMMAND UNLOCK SECTION] 
     // 학생은 아래의 코드를 복사하여 필요한 스킬 수만큼 반복해야 합니다.
     // ------------------------------------------------------------------
 
+    //attempt_skill_unlock(고유번호, 스킬번호, 시험문제 정답) 함수를 실행하여 시험문제의 답을 입력하면 기술이 해금됩니다.
     attempt_skill_unlock(my_secret_key, CMD_POISON, "Ancient_Relic|Doom_Greatsword|Immortal_Sword");
+
+    //주의: 시험문제에서 제공되는 CSV는 데이터를 바꾸어 최종 시험때 실행됩니다.
+    //위와 같이 string을 직접 입력하지마시오 시험문제를 풀어서 CSV로부터 저 string을 뽑아내는 코드를 작성해서 해금하시기 바랍니다.
+    //그래야 시험 당일날에도 스킬이 정상적으로 해금됩니다.
+
+
+    //해금됐는지 확인하려면 아래와 같이 is_skill_unlocked 사용해볼것!!!
     if (is_skill_unlocked(my_secret_key, CMD_POISON))
         printf("TEAM-ALPHA : CMD_POISON 해금 완료\n");
     else
@@ -131,11 +150,11 @@ void student1_ai_entry() {
     else
         printf("TEAM-ALPHA : CMD_RANGE_ATTACK 해금 실패 ㅜㅜ\n");
 
-    attempt_skill_unlock(my_secret_key, CMD_SELF_DESTRUCT, "T");
-    if (is_skill_unlocked(my_secret_key, CMD_SELF_DESTRUCT))
-        printf("TEAM-ALPHA : CMD_SELF_DESTRUCT 해금 완료\n");
+    attempt_skill_unlock(my_secret_key, CMD_BLESS, "T");
+    if (is_skill_unlocked(my_secret_key, CMD_BLESS))
+        printf("TEAM-ALPHA : CMD_BLESS 해금 완료\n");
     else
-        printf("TEAM-ALPHA : CMD_SELF_DESTRUCT 해금 실패 ㅜㅜ\n");
+        printf("TEAM-ALPHA : CMD_BLESS 해금 실패 ㅜㅜ\n");
 
     attempt_skill_unlock(my_secret_key, CMD_H_ATTACK, "Inf_03");
     if (is_skill_unlocked(my_secret_key, CMD_H_ATTACK))
@@ -158,7 +177,6 @@ void student1_ai_entry() {
 
     printf("TEAM-ALPHA : 플레이어 초기화 완료. 아무키나 누르시오.\n");
 
-    // getchar()는 main.c의 수동 입력 폴백 로직과 충돌할 수 있으므로, 
-    // 실제 실행에서는 주석 처리되거나 제거되어야 합니다.
+    // getchar()는 그냥 멈추려고 사용한거에요
     getchar();
 }

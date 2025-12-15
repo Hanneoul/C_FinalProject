@@ -139,7 +139,6 @@
     <ClInclude Include="ansi_util.h" />
     <ClInclude Include="api.h" />
     <ClInclude Include="game.h" />
-    <ClInclude Include="registration.h" />
     <ClInclude Include="render.h" />
     <ClInclude Include="sound.h" />
   </ItemGroup>

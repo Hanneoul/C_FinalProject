@@ -31,7 +31,7 @@ static const char* command_names[CMD_COUNT] = {
     "회복2", // 13: CMD_HEAL_ALL
     "원거리공격", // 14: CMD_RANGE_ATTACK
     "휴식", // 15: CMD_REST
-    "자폭", // 16: CMD_SELF_DESTRUCT
+    "축복", // 16: CMD_BLESS
     "가로공격", // 17: CMD_H_ATTACK
     "세로공격",  // 18: CMD_V_ATTACK
     "비밀"    // 19: CMD_SECRETE
