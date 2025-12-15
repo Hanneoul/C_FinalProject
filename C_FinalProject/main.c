@@ -262,11 +262,16 @@ int main() {
         game_state.player2.get_command = manual_command;
     }
 
+    //int count = 0;
+
     // 3. 메인 게임 루프
     while (game_state.game_over == 0) {
+        //count++;
         // [이전 턴 결과 출력] - AI 커맨드 입력 프롬프트를 보여주기 위해 유지
         render_game(&game_state);
         render_info(&game_state);
+
+        //printf("\n\n%d 번째 턴\n\n", count);
 
         // 1. 커맨드 입력
         int p1_command = game_state.player1.get_command(&game_state.player1, &game_state.player2);
@@ -297,6 +302,8 @@ int main() {
         if (game_state.game_over == 0) {
             Sleep(300);
         }
+
+        
     }
 
     // 4. 게임 종료 후 처리
